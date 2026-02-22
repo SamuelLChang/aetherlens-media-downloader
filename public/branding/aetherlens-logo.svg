@@ -1,0 +1,12 @@
+<svg width="880" height="220" viewBox="0 0 880 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="8" width="204" height="204" rx="42" fill="#0F172A"/>
+  <circle cx="110" cy="110" r="58" stroke="#25A6D1" stroke-width="10"/>
+  <circle cx="110" cy="110" r="21" fill="#25A6D1"/>
+  <path d="M42 146L78 121L120 139L160 83" stroke="#8BC2FF" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="42" cy="146" r="7" fill="#8BC2FF"/>
+  <circle cx="78" cy="121" r="7" fill="#8BC2FF"/>
+  <circle cx="120" cy="139" r="7" fill="#8BC2FF"/>
+  <circle cx="160" cy="83" r="9" fill="#8BC2FF"/>
+  <text x="250" y="102" fill="#0B1222" font-family="Inter, Segoe UI, sans-serif" font-size="56" font-weight="700" letter-spacing="1.2">AetherLens</text>
+  <text x="250" y="148" fill="#465064" font-family="Inter, Segoe UI, sans-serif" font-size="30" font-weight="500" letter-spacing="0.9">Media Downloader</text>
+</svg>

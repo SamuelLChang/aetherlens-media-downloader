@@ -1,0 +1,816 @@
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+
+export interface DownloadItem {
+    id: string;
+    url: string;
+    title: string;
+    thumbnail?: string;
+    progress: number;
+    status: 'pending' | 'downloading' | 'completed' | 'error' | 'paused';
+    speed?: string;
+    eta?: string;
+    format?: 'video' | 'audio' | 'photo';
+    quality?: string;
+    outputDir?: string;
+    enableTurboDownload?: boolean;
+    adaptiveTurboDownload?: boolean;
+    turboConnections?: number;
+    error?: string;
+    completedAt?: string;
+}
+
+export interface PerDownloadTurboOptions {
+    enabled: boolean;
+    adaptive?: boolean;
+    connections?: number;
+}
+
+export interface AddDownloadOptions {
+    outputDir?: string;
+    turboOverride?: PerDownloadTurboOptions;
+}
+
+export interface HistoryItem {
+    id: string;
+    title: string;
+    url: string;
+    thumbnail?: string;
+    format: 'video' | 'audio' | 'photo';
+    quality?: string;
+    completedAt: string;
+}
+
+export interface VideoInfo {
+    id: string;
+    title: string;
+    thumbnail: string;
+    duration: number;
+    uploader: string;
+    view_count?: number;
+    upload_date?: string;
+    description?: string;
+    webpage_url?: string;
+    extractor?: string;
+    videoQualities?: number[];
+    videoQualitySizes?: Record<string, number>;
+    hasAudio?: boolean;
+    extractedUrl?: string;
+    extractedSources?: Record<string, string>;
+}
+
+export interface DownloadSettings {
+    historyEnabled: boolean;
+    defaultQuality: string;
+    // Enhanced settings
+    embedSubtitles: boolean;
+    subtitleLanguages: string[];
+    embedMetadata: boolean;
+    preserveThumbnail: boolean;
+    embedAltAudio: boolean;
+    preferredAudioLang: string;
+    cookiesFromBrowser: string;
+    enableTurboDownload: boolean;
+    adaptiveTurboDownload: boolean;
+    turboConnections: number;
+}
+
+interface DownloadContextType {
+    downloads: DownloadItem[];
+    history: HistoryItem[];
+    settings: DownloadSettings;
+    addDownload: (url: string, format?: 'video' | 'audio' | 'photo', quality?: string, outputDirOrOptions?: string | AddDownloadOptions) => Promise<void>;
+    removeDownload: (id: string) => void;
+    cancelDownload: (id: string) => Promise<void>;
+    pauseDownload: (id: string) => Promise<void>;
+    resumeDownload: (id: string) => Promise<void>;
+    cancelAllDownloads: () => Promise<void>;
+    stopAllDownloads: () => Promise<void>;
+    resumeAllDownloads: () => Promise<void>;
+    boostDownload: (id: string) => Promise<void>;
+    retryDownload: (id: string) => Promise<void>;
+    clearCompleted: () => void;
+    clearHistory: () => void;
+    removeFromHistory: (id: string) => void;
+    updateSettings: (settings: Partial<DownloadSettings>) => void;
+    getVideoInfo: (url: string) => Promise<{ success: boolean; data?: VideoInfo; error?: string }>;
+    // New methods
+    searchVideos: (query: string, platform: string, count?: number) => Promise<any>;
+    getPlaylistInfo: (url: string) => Promise<any>;
+    getAvailableBrowsers: () => Promise<any>;
+    validateBrowserCookies: (browser: string) => Promise<any>;
+}
+
+// Window types are defined in vite-env.d.ts
+
+const HISTORY_STORAGE_KEY = 'aetherlens-download-history';
+const DOWNLOADS_STORAGE_KEY = 'aetherlens-downloads';
+const SETTINGS_STORAGE_KEY = 'aetherlens-settings';
+const SAVE_DEBOUNCE_MS = 1000;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+const defaultSettings: DownloadSettings = {
+    historyEnabled: true,
+    defaultQuality: '1080',
+    // Enhanced defaults
+    embedSubtitles: false,
+    subtitleLanguages: ['en', 'tr'],
+    embedMetadata: true,
+    preserveThumbnail: true,
+    embedAltAudio: false,
+    preferredAudioLang: 'original',
+    cookiesFromBrowser: '',
+    enableTurboDownload: true,
+    adaptiveTurboDownload: true,
+    turboConnections: 8,
+};
+
+const DownloadContext = createContext<DownloadContextType | undefined>(undefined);
+
+export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [downloads, setDownloads] = useState<DownloadItem[]>([]);
+    const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [settings, setSettings] = useState<DownloadSettings>(defaultSettings);
+
+    const downloadsSaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const historySaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const settingsSaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const progressQueue = React.useRef<Map<string, { progress: number; speed?: string; eta?: string }>>(new Map());
+    const progressRaf = React.useRef<number | null>(null);
+    const videoInfoCache = React.useRef<Map<string, { data: VideoInfo; timestamp: number }>>(new Map());
+    const videoInfoInflight = React.useRef<Map<string, Promise<{ success: boolean; data?: VideoInfo; error?: string }>>>(new Map());
+
+    // Load history, downloads, and settings from localStorage on mount
+    useEffect(() => {
+        try {
+            const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+            if (savedHistory) {
+                setHistory(JSON.parse(savedHistory));
+            }
+            const savedDownloads = localStorage.getItem(DOWNLOADS_STORAGE_KEY);
+            if (savedDownloads) {
+                // Restore downloads, marking any that were in progress as interrupted
+                const parsedDownloads: DownloadItem[] = JSON.parse(savedDownloads);
+                const restoredDownloads = parsedDownloads.map(d => {
+                    if (d.status === 'downloading' || d.status === 'pending') {
+                        // Mark interrupted downloads as error so user can retry
+                        return { ...d, status: 'error' as const, error: 'Download was interrupted' };
+                    }
+                    return d;
+                });
+                setDownloads(restoredDownloads);
+            }
+            const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+            if (savedSettings) {
+                setSettings({ ...defaultSettings, ...JSON.parse(savedSettings) });
+            }
+        } catch (e) {
+            console.error('Failed to load from localStorage:', e);
+        }
+    }, []);
+
+    useEffect(() => () => {
+        if (downloadsSaveTimer.current) clearTimeout(downloadsSaveTimer.current);
+        if (historySaveTimer.current) clearTimeout(historySaveTimer.current);
+        if (settingsSaveTimer.current) clearTimeout(settingsSaveTimer.current);
+        if (progressRaf.current) cancelAnimationFrame(progressRaf.current);
+    }, []);
+
+    const scheduleSave = useCallback((key: string, value: unknown, timerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>, enabled = true) => {
+        if (!enabled) return;
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+        }
+        timerRef.current = setTimeout(() => {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+            } catch (e) {
+                console.error(`Failed to save ${key} to localStorage:`, e);
+            }
+        }, SAVE_DEBOUNCE_MS);
+    }, []);
+
+    useEffect(() => {
+        scheduleSave(DOWNLOADS_STORAGE_KEY, downloads, downloadsSaveTimer);
+    }, [downloads, scheduleSave]);
+
+    useEffect(() => {
+        scheduleSave(HISTORY_STORAGE_KEY, history, historySaveTimer, settings.historyEnabled);
+    }, [history, settings.historyEnabled, scheduleSave]);
+
+    useEffect(() => {
+        scheduleSave(SETTINGS_STORAGE_KEY, settings, settingsSaveTimer);
+    }, [settings, scheduleSave]);
+
+    // Add completed download to history
+    const addToHistory = useCallback((item: DownloadItem) => {
+        if (!settings.historyEnabled) return;
+
+        // Use URL-based ID to prevent duplicates of the same video
+        // This ensures re-downloading the same video updates the existing entry
+        const historyId = btoa(item.url).replace(/[^a-zA-Z0-9]/g, '').slice(0, 20);
+
+        const historyItem: HistoryItem = {
+            id: historyId,
+            title: item.title,
+            url: item.url,
+            thumbnail: item.thumbnail,
+            format: item.format || 'video',
+            quality: item.quality,
+            completedAt: new Date().toISOString(),
+        };
+        // Remove existing entry with same ID before adding new one (update)
+        setHistory(prev => {
+            const filtered = prev.filter(h => h.id !== historyId);
+            return [historyItem, ...filtered].slice(0, 100); // Keep max 100 items
+        });
+    }, [settings.historyEnabled]);
+
+    useEffect(() => {
+        if (!window.ipcRenderer) return;
+
+        const flushProgress = () => {
+            setDownloads(prev => prev.map(d => {
+                const update = progressQueue.current.get(d.id);
+                if (!update) return d;
+
+                // Ignore late progress packets after completion to prevent
+                // accidental UI regression back to "downloading".
+                if (d.status === 'completed') {
+                    return d;
+                }
+
+                return { ...d, ...update, status: 'downloading' };
+            }));
+            progressQueue.current.clear();
+            progressRaf.current = null;
+        };
+
+        const handleProgress = (_event: any, { id, progress, speed, eta }: { id: string; progress: number; speed?: string; eta?: string }) => {
+            progressQueue.current.set(id, { progress, speed, eta });
+            if (!progressRaf.current) {
+                progressRaf.current = requestAnimationFrame(flushProgress);
+            }
+        };
+
+        const handleComplete = (_event: any, { id }: { id: string }) => {
+            setDownloads(prev => {
+                const updatedDownloads = prev.map(d => {
+                    if (d.id === id) {
+                        const completedItem = {
+                            ...d,
+                            status: 'completed' as const,
+                            progress: 100,
+                            speed: undefined,
+                            eta: undefined,
+                        };
+                        // Add to history
+                        addToHistory(completedItem);
+                        return completedItem;
+                    }
+                    return d;
+                });
+                return updatedDownloads;
+            });
+        };
+
+        const handleError = (_event: any, { id, error }: { id: string; error: string }) => {
+            console.error("Download error:", error);
+            setDownloads(prev => prev.map(d =>
+                d.id === id ? { ...d, status: 'error', error } : d
+            ));
+        };
+
+        window.ipcRenderer.on('download-progress', handleProgress);
+        window.ipcRenderer.on('download-complete', handleComplete);
+        window.ipcRenderer.on('download-error', handleError);
+
+        return () => {
+            if (window.ipcRenderer?.off) {
+                window.ipcRenderer.off('download-progress', handleProgress);
+                window.ipcRenderer.off('download-complete', handleComplete);
+                window.ipcRenderer.off('download-error', handleError);
+            }
+        };
+    }, [addToHistory]);
+
+    const getVideoInfo = useCallback(async (url: string) => {
+        const now = Date.now();
+        const cached = videoInfoCache.current.get(url);
+        if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+            return { success: true, data: cached.data } as const;
+        }
+
+        const inflight = videoInfoInflight.current.get(url);
+        if (inflight) return inflight;
+
+        const request = (async () => {
+            let result;
+            if (window.electronAPI?.getVideoInfo) {
+                result = await window.electronAPI.getVideoInfo(url, settings.cookiesFromBrowser || undefined);
+            } else if (window.ipcRenderer) {
+                result = await window.ipcRenderer.invoke('get-video-info', url, settings.cookiesFromBrowser || undefined);
+            } else {
+                result = {
+                    success: true,
+                    data: {
+                        id: 'mock-id',
+                        title: 'Mock Video Title',
+                        thumbnail: 'https://via.placeholder.com/320x180',
+                        duration: 245,
+                        uploader: 'Mock Channel',
+                        view_count: 12345,
+                        videoQualities: [1080, 720, 480],
+                        videoQualitySizes: {
+                            '1080': 220000000,
+                            '720': 130000000,
+                            '480': 70000000,
+                        },
+                    }
+                };
+            }
+
+            if (result.success && result.data) {
+                videoInfoCache.current.set(url, { data: result.data, timestamp: Date.now() });
+            }
+            videoInfoInflight.current.delete(url);
+            return result;
+        })();
+
+        videoInfoInflight.current.set(url, request);
+        return request;
+    }, [settings.cookiesFromBrowser]);
+
+    const addDownload = useCallback(async (
+        url: string,
+        format: 'video' | 'audio' | 'photo' = 'video',
+        quality?: string,
+        outputDirOrOptions?: string | AddDownloadOptions
+    ) => {
+        try {
+            const parsedOptions: AddDownloadOptions = typeof outputDirOrOptions === 'string'
+                ? { outputDir: outputDirOrOptions }
+                : (outputDirOrOptions || {});
+
+            const turboEnabled = parsedOptions.turboOverride?.enabled ?? settings.enableTurboDownload;
+            const adaptiveTurbo = parsedOptions.turboOverride?.adaptive ?? settings.adaptiveTurboDownload;
+            const turboConnections = parsedOptions.turboOverride?.connections ?? settings.turboConnections;
+
+            const infoResult = await getVideoInfo(url);
+            const info = infoResult.success ? infoResult.data : null;
+
+            // Keep downloader input as the original page URL.
+            // Main process fallback logic performs generic direct-media extraction and validation.
+            const targetUrl = url;
+
+            const downloadOptions = {
+                url: targetUrl,
+                titleOverride: info?.title,
+                format,
+                quality,
+                cookiesFromBrowser: settings.cookiesFromBrowser,
+                embedSubtitles: settings.embedSubtitles,
+                subtitleLanguages: settings.subtitleLanguages,
+                embedMetadata: settings.embedMetadata,
+                preserveThumbnail: settings.preserveThumbnail,
+                embedAltAudio: settings.embedAltAudio,
+                preferredAudioLang: settings.preferredAudioLang,
+                enableTurboDownload: turboEnabled,
+                adaptiveTurboDownload: adaptiveTurbo,
+                turboConnections,
+                outputDir: parsedOptions.outputDir,
+            };
+
+            let result;
+            if (window.electronAPI?.startDownload) {
+                result = await window.electronAPI.startDownload(downloadOptions);
+            } else if (window.ipcRenderer) {
+                result = await window.ipcRenderer.invoke('start-download', downloadOptions);
+            } else {
+                console.warn('IPC not available, mocking download');
+                const id = Math.random().toString(36).substr(2, 9);
+                const newItem: DownloadItem = {
+                    id,
+                    url,
+                    title: info?.title || 'Mock Download',
+                    thumbnail: info?.thumbnail,
+                    progress: 0,
+                    status: 'pending',
+                    format,
+                    quality,
+                    outputDir: parsedOptions.outputDir,
+                    enableTurboDownload: turboEnabled,
+                    adaptiveTurboDownload: adaptiveTurbo,
+                    turboConnections,
+                };
+                setDownloads(prev => [newItem, ...prev]);
+
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setDownloads(prev => prev.map(d => {
+                            if (d.id === id) {
+                                const completed = { ...d, status: 'completed' as const, progress: 100 };
+                                addToHistory(completed);
+                                return completed;
+                            }
+                            return d;
+                        }));
+                    } else {
+                        setDownloads(prev => prev.map(d =>
+                            d.id === id ? { ...d, status: 'downloading', progress, speed: '1.5 MB/s', eta: '00:15' } : d
+                        ));
+                    }
+                }, 500);
+                return;
+            }
+
+            const newItem: DownloadItem = {
+                id: result.id,
+                url,
+                title: info?.title || 'Downloading...',
+                thumbnail: info?.thumbnail,
+                progress: 0,
+                status: 'pending',
+                format,
+                quality,
+                outputDir: parsedOptions.outputDir,
+                enableTurboDownload: turboEnabled,
+                adaptiveTurboDownload: adaptiveTurbo,
+                turboConnections,
+            };
+            setDownloads(prev => [newItem, ...prev]);
+        } catch (e) {
+            console.error('Failed to start download', e);
+        }
+    }, [getVideoInfo, addToHistory, settings]);
+
+    const removeDownload = useCallback((id: string) => {
+        setDownloads(prev => prev.filter(d => d.id !== id));
+    }, []);
+
+    const cancelDownload = useCallback(async (id: string) => {
+        try {
+            let result: any = { success: false };
+            if (window.electronAPI?.cancelDownload) {
+                result = await window.electronAPI.cancelDownload(id);
+            } else if (window.ipcRenderer) {
+                result = await window.ipcRenderer.invoke('cancel-download', id);
+            } else {
+                result = { success: true };
+            }
+
+            if (!result?.success) {
+                throw new Error(result?.error || 'Cancel request was not accepted');
+            }
+
+            setDownloads(prev => prev.filter(d => d.id !== id));
+        } catch (e) {
+            console.error('Failed to cancel download', e);
+            throw e;
+        }
+    }, []);
+
+    const pauseDownload = useCallback(async (id: string) => {
+        try {
+            let result: any = { success: false };
+            if (window.electronAPI?.pauseDownload) {
+                result = await window.electronAPI.pauseDownload(id);
+            } else if (window.ipcRenderer) {
+                result = await window.ipcRenderer.invoke('pause-download', id);
+            } else {
+                result = { success: true };
+            }
+
+            if (!result?.success) {
+                throw new Error(result?.error || 'Pause request was not accepted');
+            }
+
+            // Update status to paused
+            setDownloads(prev => prev.map(d =>
+                d.id === id ? { ...d, status: 'paused' as const } : d
+            ));
+        } catch (e) {
+            console.error('Failed to pause download', e);
+            throw e;
+        }
+    }, []);
+
+    const resumeDownload = useCallback(async (id: string) => {
+        try {
+            // Get the paused download info
+            const download = downloads.find(d => d.id === id);
+            if (!download) return;
+
+            // Resume will restart the download with the same URL
+            // yt-dlp automatically resumes from partial files
+            let resumed = false;
+            if (window.electronAPI?.resumeDownload) {
+                const result = await window.electronAPI.resumeDownload(id);
+                if (result.success && result.options) {
+                    // Restart the download
+                    await window.electronAPI.startDownload({
+                        ...result.options,
+                        id // Keep same ID
+                    });
+                    resumed = true;
+                }
+            } else if (window.ipcRenderer) {
+                const result = await window.ipcRenderer.invoke('resume-download', id);
+                if (result.success && result.options) {
+                    await window.ipcRenderer.invoke('start-download', {
+                        ...result.options,
+                        id
+                    });
+                    resumed = true;
+                }
+            }
+
+            // Fallback: if main process lost paused state (e.g. app restart),
+            // restart using the same id so yt-dlp can continue partial files.
+            if (!resumed) {
+                const options = {
+                    id,
+                    url: download.url,
+                    format: download.format || 'video',
+                    quality: download.quality,
+                    cookiesFromBrowser: settings.cookiesFromBrowser,
+                    embedSubtitles: settings.embedSubtitles,
+                    subtitleLanguages: settings.subtitleLanguages,
+                    embedMetadata: settings.embedMetadata,
+                    preserveThumbnail: settings.preserveThumbnail,
+                    embedAltAudio: settings.embedAltAudio,
+                    preferredAudioLang: settings.preferredAudioLang,
+                    enableTurboDownload: download.enableTurboDownload ?? settings.enableTurboDownload,
+                    adaptiveTurboDownload: download.adaptiveTurboDownload ?? settings.adaptiveTurboDownload,
+                    turboConnections: download.turboConnections ?? settings.turboConnections,
+                    outputDir: download.outputDir,
+                };
+
+                if (window.electronAPI?.startDownload) {
+                    await window.electronAPI.startDownload(options);
+                    resumed = true;
+                } else if (window.ipcRenderer) {
+                    await window.ipcRenderer.invoke('start-download', options);
+                    resumed = true;
+                }
+            }
+
+            if (!resumed) {
+                throw new Error('Unable to resume download');
+            }
+
+            // Update status to downloading
+            setDownloads(prev => prev.map(d =>
+                d.id === id ? { ...d, status: 'downloading' as const } : d
+            ));
+        } catch (e) {
+            console.error('Failed to resume download', e);
+            throw e;
+        }
+    }, [downloads, settings]);
+
+    const cancelAllDownloads = useCallback(async () => {
+        const cancellableIds = downloads
+            .filter(d => d.status === 'pending' || d.status === 'downloading' || d.status === 'paused')
+            .map(d => d.id);
+
+        if (cancellableIds.length === 0) return;
+
+        const results = await Promise.allSettled(cancellableIds.map(id => cancelDownload(id)));
+        const failures = results.filter(result => result.status === 'rejected');
+        if (failures.length > 0) {
+            throw new Error(`Failed to cancel ${failures.length} download(s)`);
+        }
+    }, [downloads, cancelDownload]);
+
+    const stopAllDownloads = useCallback(async () => {
+        const pausableIds = downloads
+            .filter(d => d.status === 'downloading')
+            .map(d => d.id);
+
+        if (pausableIds.length === 0) return;
+
+        const results = await Promise.allSettled(pausableIds.map(id => pauseDownload(id)));
+        const failures = results.filter(result => result.status === 'rejected');
+        if (failures.length > 0) {
+            throw new Error(`Failed to stop ${failures.length} download(s)`);
+        }
+    }, [downloads, pauseDownload]);
+
+    const resumeAllDownloads = useCallback(async () => {
+        const resumableIds = downloads
+            .filter(d => d.status === 'paused')
+            .map(d => d.id);
+
+        if (resumableIds.length === 0) return;
+
+        const results = await Promise.allSettled(resumableIds.map(id => resumeDownload(id)));
+        const failures = results.filter(result => result.status === 'rejected');
+        if (failures.length > 0) {
+            throw new Error(`Failed to resume ${failures.length} download(s)`);
+        }
+    }, [downloads, resumeDownload]);
+
+    const boostDownload = useCallback(async (id: string) => {
+        const download = downloads.find(d => d.id === id);
+        if (!download) return;
+
+        // Use a conservative boost floor that is faster but still stable for most hosts.
+        const boostedConnections = Math.max(download.turboConnections || settings.turboConnections || 8, 12);
+
+        const boostedOptions = {
+            id,
+            url: download.url,
+            format: download.format || 'video',
+            quality: download.quality,
+            cookiesFromBrowser: settings.cookiesFromBrowser,
+            embedSubtitles: settings.embedSubtitles,
+            subtitleLanguages: settings.subtitleLanguages,
+            embedMetadata: settings.embedMetadata,
+            preserveThumbnail: settings.preserveThumbnail,
+            embedAltAudio: settings.embedAltAudio,
+            preferredAudioLang: settings.preferredAudioLang,
+            enableTurboDownload: true,
+            adaptiveTurboDownload: false,
+            turboConnections: boostedConnections,
+            outputDir: download.outputDir,
+        };
+
+        try {
+            if (window.electronAPI?.pauseDownload) {
+                await window.electronAPI.pauseDownload(id);
+            } else if (window.ipcRenderer) {
+                await window.ipcRenderer.invoke('pause-download', id);
+            }
+
+            if (window.electronAPI?.startDownload) {
+                await window.electronAPI.startDownload(boostedOptions);
+            } else if (window.ipcRenderer) {
+                await window.ipcRenderer.invoke('start-download', boostedOptions);
+            }
+
+            setDownloads(prev => prev.map(d =>
+                d.id === id
+                    ? {
+                        ...d,
+                        status: 'downloading' as const,
+                        enableTurboDownload: true,
+                        adaptiveTurboDownload: false,
+                        turboConnections: boostedConnections,
+                        eta: 'boosting...',
+                    }
+                    : d
+            ));
+        } catch (e) {
+            console.error('Failed to boost download', e);
+            throw e;
+        }
+    }, [downloads, settings]);
+
+    const retryDownload = useCallback(async (id: string) => {
+        const download = downloads.find(d => d.id === id);
+        if (!download) return;
+
+        // Try resume path first to reuse partial files.
+        try {
+            await resumeDownload(id);
+            return;
+        } catch {
+            // Fallback for environments without resume support.
+        }
+
+        removeDownload(id);
+        await addDownload(download.url, download.format, download.quality, {
+            outputDir: download.outputDir,
+            turboOverride: {
+                enabled: download.enableTurboDownload ?? settings.enableTurboDownload,
+                adaptive: download.adaptiveTurboDownload ?? settings.adaptiveTurboDownload,
+                connections: download.turboConnections ?? settings.turboConnections,
+            }
+        });
+    }, [downloads, resumeDownload, removeDownload, addDownload, settings]);
+
+    const clearCompleted = useCallback(() => {
+        setDownloads(prev => prev.filter(d => d.status !== 'completed' && d.status !== 'error'));
+    }, []);
+
+    const clearHistory = useCallback(() => {
+        setHistory([]);
+        localStorage.removeItem(HISTORY_STORAGE_KEY);
+    }, []);
+
+    const removeFromHistory = useCallback((id: string) => {
+        setHistory(prev => prev.filter(h => h.id !== id));
+    }, []);
+
+    const updateSettings = useCallback((newSettings: Partial<DownloadSettings>) => {
+        setSettings(prev => ({ ...prev, ...newSettings }));
+    }, []);
+
+    // New methods for search and playlist
+    const searchVideos = useCallback(async (query: string, platform: string, count: number = 20) => {
+        if (window.electronAPI?.searchVideos) {
+            return await window.electronAPI.searchVideos(query, platform, count);
+        }
+        if (window.ipcRenderer) {
+            return await window.ipcRenderer.invoke('search-videos', query, platform, count);
+        }
+        // Mock for browser testing
+        return {
+            success: true,
+            data: {
+                query,
+                platform,
+                results: []
+            }
+        };
+    }, []);
+
+    const getPlaylistInfo = useCallback(async (url: string) => {
+        if (window.electronAPI?.getPlaylistInfo) {
+            return await window.electronAPI.getPlaylistInfo(url);
+        }
+        if (window.ipcRenderer) {
+            return await window.ipcRenderer.invoke('get-playlist-info', url);
+        }
+        // Mock for browser testing
+        return {
+            success: false,
+            error: 'Playlist info not available in browser mode'
+        };
+    }, []);
+
+    const getAvailableBrowsers = useCallback(async () => {
+        if (window.electronAPI?.getAvailableBrowsers) {
+            return await window.electronAPI.getAvailableBrowsers();
+        }
+        if (window.ipcRenderer) {
+            return await window.ipcRenderer.invoke('get-available-browsers');
+        }
+        // Mock for browser testing
+        return {
+            success: true,
+            browsers: [
+                { id: 'chrome', name: 'Google Chrome' },
+                { id: 'firefox', name: 'Mozilla Firefox' },
+                { id: 'edge', name: 'Microsoft Edge' },
+            ]
+        };
+    }, []);
+
+    const validateBrowserCookies = useCallback(async (browser: string) => {
+        if (window.electronAPI?.validateBrowserCookies) {
+            return await window.electronAPI.validateBrowserCookies(browser);
+        }
+        if (window.ipcRenderer) {
+            return await window.ipcRenderer.invoke('validate-browser-cookies', browser);
+        }
+        // Mock for browser testing
+        return {
+            success: false,
+            status: 'unknown',
+            isValid: false,
+            browser,
+            message: 'Cannot validate cookies in browser mode'
+        };
+    }, []);
+
+    return (
+        <DownloadContext.Provider value={{
+            downloads,
+            history,
+            settings,
+            addDownload,
+            removeDownload,
+            cancelDownload,
+            pauseDownload,
+            resumeDownload,
+            cancelAllDownloads,
+            stopAllDownloads,
+            resumeAllDownloads,
+            boostDownload,
+            retryDownload,
+            clearCompleted,
+            clearHistory,
+            removeFromHistory,
+            updateSettings,
+            getVideoInfo,
+            searchVideos,
+            getPlaylistInfo,
+            getAvailableBrowsers,
+            validateBrowserCookies,
+        }}>
+            {children}
+        </DownloadContext.Provider>
+    );
+};
+
+export const useDownloads = () => {
+    const context = useContext(DownloadContext);
+    if (context === undefined) {
+        throw new Error('useDownloads must be used within a DownloadProvider');
+    }
+    return context;
+};

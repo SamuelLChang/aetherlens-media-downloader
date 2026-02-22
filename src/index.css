@@ -1,0 +1,186 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Cool minimal palette (dark default) */
+    --background: 15 18 26;
+    --foreground: 232 236 244;
+
+    --primary: 34 147 196; /* teal-blue */
+    --primary-foreground: 245 248 252;
+
+    --secondary: 32 38 52;
+    --secondary-foreground: 174 183 198;
+
+    --accent: 65 130 197; /* slate blue */
+    --accent-foreground: 244 247 252;
+
+    --success: 34 197 94;
+    --warning: 234 179 8;
+    --error: 239 68 68;
+
+    --card: 22 27 38;
+    --card-foreground: 232 236 244;
+
+    --app-bg:
+      radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.05), transparent 24%),
+      radial-gradient(circle at 80% 10%, rgba(34, 147, 196, 0.08), transparent 28%),
+      linear-gradient(135deg, rgb(10, 14, 22), rgb(17, 22, 32));
+  }
+
+  /* Light mode (cool minimal) */
+  .light {
+    --background: 244 247 252;
+    --foreground: 18 24 38;
+    --primary: 25 122 173;
+    --primary-foreground: 244 247 252;
+    --secondary: 230 234 241;
+    --secondary-foreground: 62 72 92;
+    --accent: 59 130 246;
+    --accent-foreground: 244 247 252;
+    --card: 255 255 255;
+    --card-foreground: 18 24 38;
+
+    --app-bg:
+      radial-gradient(circle at 18% 18%, rgba(37, 99, 235, 0.08), transparent 22%),
+      radial-gradient(circle at 82% 8%, rgba(14, 165, 233, 0.08), transparent 24%),
+      linear-gradient(145deg, rgb(248, 251, 255), rgb(239, 245, 252));
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased h-screen overflow-hidden;
+    background: var(--app-bg);
+    font-family: 'Inter', sans-serif;
+  }
+
+  #root {
+    @apply h-full w-full;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-secondary/70 backdrop-blur-md border border-foreground/5 shadow-lg;
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-lg border border-foreground/10 hover:border-primary/40 transition-all duration-300 shadow-lg;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 shadow-[0_10px_25px_rgba(34,147,196,0.25)];
+  }
+
+  .panel {
+    @apply bg-card/90 border border-foreground/5 rounded-2xl shadow-xl backdrop-blur-lg;
+  }
+
+  .section-title {
+    @apply text-xs font-semibold tracking-[0.18em] uppercase text-foreground/60;
+  }
+
+  .page-shell {
+    @apply h-full w-full bg-transparent flex flex-col p-8 overflow-auto;
+  }
+
+  .surface-card {
+    @apply bg-card/90 border border-foreground/10 rounded-2xl shadow-xl backdrop-blur-md;
+  }
+
+  .surface-subtle {
+    @apply bg-secondary/55 border border-foreground/10 rounded-xl;
+  }
+
+  .soft-input {
+    @apply w-full bg-secondary/55 border border-foreground/10 rounded-xl text-sm placeholder:text-foreground/35 focus:outline-none focus:border-primary/45 focus:ring-1 focus:ring-primary/35;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-secondary/60 hover:bg-secondary/80 border border-foreground/10 text-foreground/75 hover:text-foreground transition-colors;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-error/10 border border-error/25 text-error hover:bg-error/15 transition-colors;
+  }
+
+  .stats-chip {
+    @apply px-2.5 py-1 rounded-lg text-xs font-medium bg-secondary/60 border border-foreground/10 text-foreground/65;
+  }
+
+  .list-card {
+    @apply bg-secondary/40 border border-foreground/10 rounded-xl p-4 hover:bg-secondary/55 hover:border-foreground/20 transition-colors;
+  }
+}
+
+@layer utilities {
+  .drag-region {
+    -webkit-app-region: drag;
+  }
+
+  .no-drag {
+    -webkit-app-region: no-drag;
+  }
+}
+
+/* Custom Scrollbar - Minimal */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-foreground/10 rounded-full hover:bg-foreground/20 transition-colors;
+}
+
+/* Animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); }
+    50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.5); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s infinite;
+}
+
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 180px 180px;
+  mask-image: radial-gradient(circle at center, rgba(0,0,0,0.15), transparent 70%);
+  pointer-events: none;
+}
+
+.light .grid-overlay {
+  background-image:
+    linear-gradient(rgba(18,24,38,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18,24,38,0.04) 1px, transparent 1px);
+}
+
+.light .glass-panel {
+  @apply bg-card/85 border-foreground/10 shadow-[0_10px_30px_rgba(15,23,42,0.08)];
+}
+
+.light .panel {
+  @apply bg-card/90 border-foreground/10 shadow-[0_12px_34px_rgba(15,23,42,0.07)];
+}
