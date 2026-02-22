@@ -128,7 +128,7 @@ Notes:
 ### 3. Clone The Project
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/SamuelLChang/aetherlens-media-downloader.git
 cd aetherlens-media-downloader
 ```
 
