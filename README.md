@@ -17,8 +17,13 @@ Built with Electron, React, and TypeScript, it is designed to make advanced down
 
 ## Product Tour
 
-Visual standards and naming rules are documented in `docs/screenshots/SCREENSHOT_SCHEME.md`.
 All screenshots below are real in-app captures stored as `.png` files.
+
+### First-Run Setup Wizard
+
+![First-run setup wizard checking runtime modules](docs/screenshots/setup-wizard-first-run.png)
+
+On first launch, AetherLens checks required/optional runtime tools (`yt-dlp`, `ffmpeg`, `aria2c`) and shows one-click copy commands for missing tools.
 
 ### Home And URL Preview
 
@@ -57,6 +62,110 @@ Track active and completed jobs with progress information and controls for pause
 ```bash
 npm install
 npm run dev
+```
+
+## Installation Guide (Step By Step)
+
+This section is designed for first-time users. If you follow the steps in order, the app should run without extra troubleshooting.
+
+### 1. Install Required Tools
+
+`yt-dlp` is required. `ffmpeg` and `aria2c` are optional but strongly recommended.
+
+Windows (PowerShell):
+
+```powershell
+winget install OpenJS.NodeJS.LTS
+winget install yt-dlp.yt-dlp
+winget install Gyan.FFmpeg
+winget install aria2.aria2
+```
+
+macOS (Homebrew):
+
+```bash
+brew install node yt-dlp ffmpeg aria2
+```
+
+Linux examples:
+
+Debian/Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install -y nodejs npm yt-dlp ffmpeg aria2
+```
+
+Fedora:
+
+```bash
+sudo dnf install -y nodejs npm yt-dlp ffmpeg aria2
+```
+
+Arch:
+
+```bash
+sudo pacman -S --needed nodejs npm yt-dlp ffmpeg aria2
+```
+
+### 2. Verify Tool Installation
+
+Run:
+
+```bash
+node --version
+npm --version
+yt-dlp --version
+ffmpeg -version
+aria2c --version
+```
+
+Notes:
+
+- `yt-dlp` must work.
+- `ffmpeg` and `aria2c` may be missing if you only want basic downloads.
+
+### 3. Clone The Project
+
+```bash
+git clone <your-repo-url>
+cd aetherlens-media-downloader
+```
+
+### 4. Install JavaScript Dependencies
+
+```bash
+npm install
+```
+
+### 5. Run The App (Development)
+
+```bash
+npm run dev
+```
+
+What to expect on first run:
+
+1. The setup wizard opens automatically.
+2. Missing tools are marked as "Not found on PATH".
+3. Use "Copy command" and install missing items.
+4. Click "Recheck" in the wizard.
+5. Continue when required tools are detected.
+
+### 6. Build A Desktop Installer
+
+```bash
+npm run build
+```
+
+This generates packaged artifacts with Electron Builder.
+
+### 7. Optional: Bundle Local `aria2c`
+
+If you want to package with a local `aria2c` binary (when available on your machine):
+
+```bash
+npm run build:with-bundled-aria2
 ```
 
 ## System Requirements
