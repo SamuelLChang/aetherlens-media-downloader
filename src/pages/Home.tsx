@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDownloads, VideoInfo } from '../context/DownloadContext';
 import {
     ArrowRight,
@@ -28,6 +29,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Window types are defined in vite-env.d.ts
 
 const Home: React.FC = () => {
+    const { t } = useTranslation();
     const [url, setUrl] = useState('');
     const [showFormatSelector, setShowFormatSelector] = useState(false);
     const [showSearchModal, setShowSearchModal] = useState(false);
@@ -265,18 +267,18 @@ const Home: React.FC = () => {
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 text-sm text-foreground/60">
                             <AetherLensLogo compact className="shrink-0" />
-                            <span className="section-title">AETHERLENS MEDIA DOWNLOADER</span>
+                            <span className="section-title">{t('home.brand')}</span>
                         </div>
                         <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">
-                            A simpler path from link to file.
+                            {t('home.title')}
                         </h1>
                         <p className="text-foreground/65 text-sm leading-relaxed max-w-2xl">
-                            Paste a media URL, choose format, and download with reliable defaults for video, audio, photo, and playlists, including timestamp screenshots from links like `?t=109`.
+                            {t('home.subtitle')}
                         </p>
                         <div className="flex gap-4 flex-wrap mt-1 text-xs text-foreground/55">
-                            <span>Live metadata preview</span>
-                            <span>Playlist-aware input</span>
-                            <span>Quick format actions</span>
+                            <span>{t('home.livePreview')}</span>
+                            <span>{t('home.playlistAware')}</span>
+                            <span>{t('home.quickActions')}</span>
                         </div>
                     </div>
                 </motion.div>
@@ -288,12 +290,12 @@ const Home: React.FC = () => {
                     className="panel min-w-[240px] p-5 flex items-center gap-4"
                 >
                     <div className="flex-1">
-                        <p className="text-xs uppercase tracking-[0.14em] text-foreground/50">Active</p>
+                        <p className="text-xs uppercase tracking-[0.14em] text-foreground/50">{t('home.active')}</p>
                         <p className="text-2xl font-semibold text-foreground">{downloads.filter(d => d.status !== 'completed' && d.status !== 'error').length}</p>
                     </div>
                     <div className="h-12 w-px bg-white/10" />
                     <div className="flex-1">
-                        <p className="text-xs uppercase tracking-[0.14em] text-foreground/50">Completed</p>
+                        <p className="text-xs uppercase tracking-[0.14em] text-foreground/50">{t('home.completed')}</p>
                         <p className="text-2xl font-semibold text-foreground">{downloads.filter(d => d.status === 'completed').length}</p>
                     </div>
                 </motion.div>
@@ -310,7 +312,7 @@ const Home: React.FC = () => {
                     <div className="flex flex-col lg:flex-row lg:items-center gap-3">
                         <div className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2 text-sm text-foreground/70">
                             <LinkIcon className="w-5 h-5 text-primary" />
-                            <span>Paste any media link</span>
+                            <span>{t('home.pasteAnyLink')}</span>
                         </div>
                         {clipboardUrl && !url && (
                             <button
@@ -319,24 +321,24 @@ const Home: React.FC = () => {
                                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs bg-primary/15 text-primary border border-primary/20 hover:bg-primary/25 transition-colors"
                             >
                                 <Zap className="w-4 h-4" />
-                                Paste detected link
+                                {t('home.pasteDetected')}
                             </button>
                         )}
                     </div>
 
-                        <div className="relative flex items-center bg-secondary/50 border border-foreground/10 rounded-2xl p-3 focus-within:border-primary/50 transition-all shadow-sm">
+                    <div className="relative flex items-center bg-secondary/50 border border-foreground/10 rounded-2xl p-3 focus-within:border-primary/50 transition-all shadow-sm">
                         <input
                             type="text"
                             value={url}
                             onChange={(e) => handleUrlChange(e.target.value)}
                             placeholder="https://youtu.be/..."
-                                className="flex-1 bg-transparent border-none focus:ring-0 text-foreground placeholder:text-foreground/40 h-12 px-2 outline-none text-base"
+                            className="flex-1 bg-transparent border-none focus:ring-0 text-foreground placeholder:text-foreground/40 h-12 px-2 outline-none text-base"
                         />
                         <div className="flex items-center gap-2">
                             <button
                                 type="button"
                                 onClick={handlePaste}
-                                    className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/60 hover:text-foreground transition-colors"
+                                className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/60 hover:text-foreground transition-colors"
                                 title="Paste from clipboard"
                             >
                                 <Clipboard className="w-4 h-4" />
@@ -351,7 +353,7 @@ const Home: React.FC = () => {
                                         : "bg-secondary text-foreground/30 cursor-not-allowed"
                                 )}
                             >
-                                Download <ArrowRight className="w-4 h-4" />
+                                {t('home.download')} <ArrowRight className="w-4 h-4" />
                             </button>
                         </div>
                     </div>
@@ -375,7 +377,7 @@ const Home: React.FC = () => {
                             )}
                         >
                             <Video className="w-3.5 h-3.5" />
-                            Quick video (default)
+                            {t('home.quickVideo')}
                         </button>
                         <button
                             type="button"
@@ -395,7 +397,7 @@ const Home: React.FC = () => {
                             )}
                         >
                             <Music className="w-3.5 h-3.5" />
-                            Quick audio
+                            {t('home.quickAudio')}
                         </button>
                         <button
                             type="button"
@@ -417,7 +419,7 @@ const Home: React.FC = () => {
                             )}
                         >
                             <ImageIcon className="w-3.5 h-3.5" />
-                            Thumbnail
+                            {t('home.thumbnail')}
                         </button>
                         {hasTimestampInUrl && (
                             <button
@@ -440,7 +442,7 @@ const Home: React.FC = () => {
                                 )}
                             >
                                 <Camera className="w-3.5 h-3.5" />
-                                Screenshot
+                                {t('home.screenshot')}
                             </button>
                         )}
                         <button
@@ -449,7 +451,7 @@ const Home: React.FC = () => {
                             className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all border border-foreground/10 bg-secondary/60 text-foreground hover:border-primary/30"
                         >
                             <Search className="w-3.5 h-3.5" />
-                            Search
+                            {t('home.search')}
                         </button>
                         {isPlaylistUrl && (
                             <button
@@ -458,7 +460,7 @@ const Home: React.FC = () => {
                                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all border border-success/25 bg-success/10 text-foreground hover:border-success/40"
                             >
                                 <ListVideo className="w-3.5 h-3.5" />
-                                Open playlist
+                                {t('home.openPlaylist')}
                             </button>
                         )}
                     </div>
@@ -492,7 +494,7 @@ const Home: React.FC = () => {
                     <div className="flex items-center justify-between gap-2 mb-2">
                         <div className="flex items-center gap-2">
                             <Zap className="w-4 h-4 text-primary" />
-                            <h2 className="text-sm font-semibold text-foreground">Active Downloads</h2>
+                            <h2 className="text-sm font-semibold text-foreground">{t('home.activeDownloads')}</h2>
                         </div>
                         <div className="flex items-center gap-2">
                             <button
@@ -500,11 +502,11 @@ const Home: React.FC = () => {
                                 onClick={() => void stopAllDownloads().catch(console.error)}
                                 className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-foreground/15 text-foreground/70 hover:text-foreground hover:border-primary/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 disabled={homeStoppableCount === 0}
-                                title={homeStoppableCount === 0 ? 'No running downloads to stop' : 'Stop all running downloads'}
+                                title={homeStoppableCount === 0 ? t('home.noRunningToStop') : t('home.stopAllRunning')}
                             >
                                 <span className="inline-flex items-center gap-1">
                                     <Pause className="w-3.5 h-3.5" />
-                                    Stop All
+                                    {t('home.stopAll')}
                                 </span>
                             </button>
                             <button
@@ -512,22 +514,22 @@ const Home: React.FC = () => {
                                 onClick={() => void resumeAllDownloads().catch(console.error)}
                                 className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-foreground/15 text-foreground/70 hover:text-foreground hover:border-primary/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 disabled={homeResumableCount === 0}
-                                title={homeResumableCount === 0 ? 'No paused downloads to resume' : 'Resume all paused downloads'}
+                                title={homeResumableCount === 0 ? t('home.noPausedToResume') : t('home.resumeAllPaused')}
                             >
                                 <span className="inline-flex items-center gap-1">
                                     <Play className="w-3.5 h-3.5" />
-                                    Resume All
+                                    {t('home.resumeAll')}
                                 </span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => void cancelAllDownloads().catch(console.error)}
                                 className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-red-500/35 text-red-300 hover:text-red-200 hover:border-red-400/50 transition-colors"
-                                title="Cancel all active and paused downloads"
+                                title={t('home.cancelAllActive')}
                             >
                                 <span className="inline-flex items-center gap-1">
                                     <X className="w-3.5 h-3.5" />
-                                    Cancel All
+                                    {t('home.cancelAll')}
                                 </span>
                             </button>
                         </div>
@@ -550,13 +552,13 @@ const Home: React.FC = () => {
             {completedDownloads.length > 0 && (
                 <div className="max-w-2xl mx-auto w-full space-y-3">
                     <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-sm font-semibold text-foreground/65">Recent History</h2>
+                        <h2 className="text-sm font-semibold text-foreground/65">{t('home.recentHistory')}</h2>
                         <button
                             onClick={clearCompleted}
                             className="flex items-center gap-1 text-xs text-foreground/40 hover:text-red-400 transition-colors"
                         >
                             <Trash2 className="w-3 h-3" />
-                            Clear
+                            {t('home.clear')}
                         </button>
                     </div>
                     {completedDownloads.slice(0, 3).map(item => (
@@ -581,7 +583,7 @@ const Home: React.FC = () => {
                     className="flex-1 flex flex-col items-center justify-center text-center pb-10"
                 >
                     <p className="text-foreground/20 text-sm font-light">
-                        Ready to download
+                        {t('home.readyToDownload')}
                     </p>
                 </motion.div>
             )}

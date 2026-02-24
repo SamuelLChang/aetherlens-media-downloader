@@ -1,0 +1,92 @@
+{
+    "nav": {
+        "downloads": "Downloads",
+        "features": "Funcionalidades",
+        "screenshots": "Capturas de Tela",
+        "source": "Código"
+    },
+    "hero": {
+        "tag": "// código aberto & multiplataforma",
+        "title": "Uma forma mais limpa de <em>baixar mídia.</em>",
+        "desc": "Cole um link, escolha um formato, deixe o AetherLens cuidar do resto. Electron + yt-dlp por baixo, uma fila organizada na superfície.",
+        "downloadBtn": "Baixar",
+        "seeFirst": "Ver primeiro"
+    },
+    "stats": {
+        "license": "Licença",
+        "platforms": "Plataformas",
+        "backend": "Motor"
+    },
+    "downloads": {
+        "label": "Downloads",
+        "title": "Baixe o instalador",
+        "desc": "Da última versão do GitHub. Escolha seu sistema operacional.",
+        "loading": "carregando…",
+        "yourOS": "→ seu SO",
+        "windows": "Windows",
+        "macos": "macOS",
+        "linux": "Linux",
+        "windowsHint": "instalador .exe",
+        "macosHint": "imagem de disco .dmg",
+        "linuxHint": ".AppImage portátil",
+        "downloadBtn": "Baixar",
+        "notInRelease": "Não disponível na última versão.",
+        "releases": "Versões",
+        "couldNotLoad": "não foi possível carregar a versão"
+    },
+    "features": {
+        "label": "Funcionalidades",
+        "title": "O que faz",
+        "desc": "Análise de URL, seleção de formato, gerenciamento de fila — sem terminal necessário.",
+        "metadataTitle": "Prévia de metadados da URL",
+        "metadataDesc": "Veja título, duração e formatos disponíveis antes de baixar.",
+        "formatTitle": "Controle de formato e qualidade",
+        "formatDesc": "Escolha perfis de áudio ou vídeo — sem adivinhação, sem re-downloads.",
+        "playlistTitle": "Suporte a playlists e lotes",
+        "playlistDesc": "Selecione itens específicos de canais e playlists ao invés de baixar tudo.",
+        "queueTitle": "Gerenciamento de fila",
+        "queueDesc": "Pause, retome, tente novamente ou cancele — tudo em uma tela.",
+        "wizardTitle": "Assistente de configuração",
+        "wizardDesc": "O fluxo de primeira execução cuida das dependências para você não precisar usar o terminal.",
+        "historyTitle": "Histórico persistente",
+        "historyDesc": "Downloads anteriores e preferências são mantidos entre sessões."
+    },
+    "screenshots": {
+        "label": "Prévia",
+        "title": "O que você está instalando",
+        "desc": "Capturas reais do aplicativo.",
+        "homeCaption": "Início — cole uma URL, veja metadados, baixe.",
+        "formatCaption": "Seletor de formato — escolha codec, resolução, container.",
+        "playlistCaption": "Seletor de playlist — escolha itens de um lote.",
+        "queueCaption": "Fila — progresso, pausa, nova tentativa, tudo em um lugar."
+    },
+    "workflow": {
+        "label": "Fluxo de trabalho",
+        "title": "Quatro passos, do início ao fim",
+        "step1Title": "Instalar",
+        "step1Desc": "Execute o instalador, siga o assistente de configuração.",
+        "step2Title": "Colar",
+        "step2Desc": "Insira uma URL — metadados e formatos carregam automaticamente.",
+        "step3Title": "Configurar",
+        "step3Desc": "Defina formato, qualidade e pasta de saída.",
+        "step4Title": "Baixar",
+        "step4Desc": "Clique em iniciar. Acompanhe o progresso na fila."
+    },
+    "footer": {
+        "releasesText": "Todos os binários disponíveis em",
+        "releasesLink": "GitHub Releases",
+        "warning": "Você pode ver um aviso de assinatura na primeira execução — o app é de código aberto e não possui assinatura de código comercial. No Windows clique em <strong>Mais informações → Executar mesmo assim</strong>, no macOS use <strong>Configurações do Sistema → Abrir Mesmo Assim</strong>."
+    },
+    "modal": {
+        "badge": "download iniciado",
+        "title": "Sobre avisos do instalador",
+        "body": "Seu download começou. Windows e macOS podem exibir um aviso de confiança porque o AetherLens não possui assinatura comercial de código — é uma questão de custo de assinatura, não um problema de segurança.",
+        "checksTitle": "Verificações rápidas",
+        "check1": "Use apenas links desta página ou das versões oficiais do GitHub.",
+        "check2": "Compare tags de versão e commits no repositório.",
+        "check3": "Leia o código-fonte se quiser total confiança.",
+        "viewSource": "Ver código",
+        "gotIt": "Entendi",
+        "close": "Fechar"
+    }
+}

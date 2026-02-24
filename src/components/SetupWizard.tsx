@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, AlertCircle, Copy, ExternalLink, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface RuntimeDependency {
   id: string;
@@ -21,6 +22,7 @@ interface SetupWizardProps {
 }
 
 const SetupWizard: React.FC<SetupWizardProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<RuntimeStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedDependencyId, setCopiedDependencyId] = useState<string>('');
@@ -79,10 +81,10 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ isOpen, onClose }) => {
       <div className="w-full max-w-3xl panel p-6 lg:p-7 border border-foreground/15 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="section-title">First-Run Setup</p>
-            <h2 className="text-xl lg:text-2xl font-semibold mt-2">Prepare Runtime Dependencies</h2>
+            <p className="section-title">{t('setupWizard.firstRunSetup')}</p>
+            <h2 className="text-xl lg:text-2xl font-semibold mt-2">{t('setupWizard.prepareRuntime')}</h2>
             <p className="text-sm text-foreground/70 mt-2 max-w-2xl">
-              AetherLens works best when required tools are available on your system. Install missing tools using the commands below.
+              {t('setupWizard.runtimeDesc')}
             </p>
           </div>
           <button
@@ -92,12 +94,12 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ isOpen, onClose }) => {
             title="Recheck dependencies"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Recheck
+            {t('setupWizard.recheck')}
           </button>
         </div>
 
         <div className="mt-5 text-xs text-foreground/50">
-          Platform: <span className="text-foreground/80 font-medium">{status?.platform || 'unknown'}</span>
+          {t('setupWizard.platform')}: <span className="text-foreground/80 font-medium">{status?.platform || t('common.unknown')}</span>
         </div>
 
         <div className="mt-4 space-y-3 max-h-[48vh] overflow-auto pr-1">
@@ -113,11 +115,11 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ isOpen, onClose }) => {
                     )}
                     <p className="text-sm font-medium">
                       {item.name}
-                      {item.required ? <span className="text-warning"> (required)</span> : <span className="text-foreground/50"> (optional)</span>}
+                      {item.required ? <span className="text-warning"> ({t('setupWizard.required')})</span> : <span className="text-foreground/50"> ({t('setupWizard.optional')})</span>}
                     </p>
                   </div>
                   <p className="text-xs text-foreground/60 mt-1">
-                    {item.installed ? 'Detected and ready.' : 'Not found on PATH.'}
+                    {item.installed ? t('setupWizard.detected') : t('setupWizard.notFound')}
                   </p>
                 </div>
                 <button
@@ -126,21 +128,21 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ isOpen, onClose }) => {
                   title="Open official install guide"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  Guide
+                  {t('setupWizard.guide')}
                 </button>
               </div>
 
               {!item.installed && (
                 <>
                   <pre className="mt-3 bg-background/60 border border-foreground/10 rounded-lg p-3 text-xs whitespace-pre-wrap break-words">
-{item.installCommand}
+                    {item.installCommand}
                   </pre>
                   <button
                     onClick={() => copyCommand(item.id, item.installCommand)}
                     className="btn-ghost mt-2"
                   >
                     <Copy className="w-3.5 h-3.5" />
-                    {copiedDependencyId === item.id ? 'Copied' : 'Copy command'}
+                    {copiedDependencyId === item.id ? t('setupWizard.copied') : t('setupWizard.copyCommand')}
                   </button>
                 </>
               )}
@@ -150,7 +152,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ isOpen, onClose }) => {
 
         {missingRequired.length > 0 && (
           <div className="mt-4 rounded-lg border border-warning/25 bg-warning/10 p-3 text-sm text-warning">
-            Required tools are missing. Install them first for full functionality, or explicitly continue in limited mode.
+            {t('setupWizard.missingWarning')}
           </div>
         )}
 
@@ -162,7 +164,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ isOpen, onClose }) => {
               checked={allowLimitedMode}
               onChange={(event) => setAllowLimitedMode(event.target.checked)}
             />
-            I understand downloads may fail until required tools are installed.
+            {t('setupWizard.limitedModeAck')}
           </label>
         )}
 
@@ -172,7 +174,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ isOpen, onClose }) => {
             disabled={missingRequired.length > 0 && !allowLimitedMode}
             className="btn-primary px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {missingRequired.length > 0 ? 'Continue In Limited Mode' : 'Continue'}
+            {missingRequired.length > 0 ? t('setupWizard.continueLimit') : t('setupWizard.continue')}
           </button>
         </div>
       </div>

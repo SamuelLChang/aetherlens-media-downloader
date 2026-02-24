@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { X, Search, Youtube, Loader2, Download, Music, Eye } from 'lucide-react';
 import { useDownloads } from '../context/DownloadContext';
 import { cn, runWithConcurrency } from '../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface SearchResult {
     id: string;
@@ -49,6 +50,7 @@ const formatFileSize = (bytes?: number): string => {
 };
 
 const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
+    const { t } = useTranslation();
     const { searchVideos, addDownload, settings } = useDownloads();
     const [query, setQuery] = useState('');
     const [platform, setPlatform] = useState('youtube');
@@ -127,8 +129,8 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
                     <div className="flex items-center gap-2">
                         <Search className="w-5 h-5 text-primary" />
                         <div>
-                            <h2 className="text-lg font-semibold">Search YouTube</h2>
-                            <p className="text-xs text-foreground/40">For TikTok/Instagram, paste direct URLs on home page</p>
+                            <h2 className="text-lg font-semibold">{t('searchModal.title')}</h2>
+                            <p className="text-xs text-foreground/40">{t('searchModal.directUrlHint', 'For TikTok/Instagram, paste direct URLs on home page')}</p>
                         </div>
                     </div>
                     <button
@@ -171,7 +173,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 onKeyPress={handleKeyPress}
-                                placeholder="Search YouTube videos..."
+                                placeholder={t('searchModal.placeholder')}
                                 className="w-full pl-10 pr-4 py-3 bg-secondary/50 border border-foreground/10 rounded-xl text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50"
                             />
                         </div>
@@ -190,7 +192,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
                             ) : (
                                 <Search className="w-4 h-4" />
                             )}
-                            Search
+                            {t('searchModal.searchBtn', 'Search')}
                         </button>
                     </div>
                 </div>
@@ -206,13 +208,13 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
                     {isLoading && (
                         <div className="flex flex-col items-center justify-center py-12 gap-3">
                             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                            <p className="text-foreground/50">Searching...</p>
+                            <p className="text-foreground/50">{t('searchModal.searching')}</p>
                         </div>
                     )}
 
                     {!isLoading && !error && results.length === 0 && query && (
                         <div className="text-center text-foreground/50 py-12">
-                            No results found. Try a different search query.
+                            {t('searchModal.noResults')} {t('searchModal.tryDifferent')}
                         </div>
                     )}
 
@@ -235,14 +237,14 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
                                         onClick={selectAll}
                                         className="text-xs text-foreground/60 hover:text-foreground"
                                     >
-                                        Select All
+                                        {t('searchModal.selectAll')}
                                     </button>
                                     <span className="text-foreground/30">|</span>
                                     <button
                                         onClick={deselectAll}
                                         className="text-xs text-foreground/60 hover:text-foreground"
                                     >
-                                        Deselect All
+                                        {t('searchModal.deselectAll')}
                                     </button>
                                 </div>
                             </div>
@@ -319,14 +321,14 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
                                                     className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-primary/20 text-primary text-xs rounded-lg hover:bg-primary/30 transition-colors"
                                                 >
                                                     <Download className="w-3 h-3" />
-                                                    Video
+                                                    {t('searchModal.downloadVideo')}
                                                 </button>
                                                 <button
                                                     onClick={() => handleDownloadSingle(result, 'audio')}
                                                     className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-purple-500/20 text-purple-400 text-xs rounded-lg hover:bg-purple-500/30 transition-colors"
                                                 >
                                                     <Music className="w-3 h-3" />
-                                                    Audio
+                                                    {t('searchModal.downloadAudio')}
                                                 </button>
                                             </div>
                                         </div>
@@ -342,7 +344,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
                     <div className="p-4 border-t border-white/5 bg-secondary/30">
                         <div className="flex items-center justify-between">
                             <span className="text-sm text-foreground/60">
-                                {selectedVideos.size} video{selectedVideos.size > 1 ? 's' : ''} selected
+                                {t('searchModal.selected', { count: selectedVideos.size })}
                             </span>
                             <div className="flex gap-2">
                                 <button
@@ -350,14 +352,14 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
                                     className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors"
                                 >
                                     <Download className="w-4 h-4" />
-                                    Download Videos
+                                    {t('searchModal.downloadSelected')}
                                 </button>
                                 <button
                                     onClick={() => handleDownloadSelected('audio')}
                                     className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-600/90 transition-colors"
                                 >
                                     <Music className="w-4 h-4" />
-                                    Download Audio
+                                    {t('searchModal.downloadAudioBtn', 'Download Audio')}
                                 </button>
                             </div>
                         </div>

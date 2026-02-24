@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { X, Check, Pause, Play, Folder, AlertCircle, Youtube, Globe, Music, RefreshCw, Zap, Copy, ExternalLink } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export interface DownloadItemData {
     id: string;
@@ -64,6 +65,7 @@ const getTroubleshootingLink = (error?: string): string | null => {
 };
 
 const DownloadCard: React.FC<DownloadCardProps> = ({ item, onCancel, onPause, onResume, onBoost, onRetry, onOpenFolder }) => {
+    const { t } = useTranslation();
     const [copiedDiagnostics, setCopiedDiagnostics] = useState(false);
     const isActive = item.status === 'downloading' || item.status === 'pending';
     const isPaused = item.status === 'paused';
@@ -195,32 +197,32 @@ const DownloadCard: React.FC<DownloadCardProps> = ({ item, onCancel, onPause, on
                             {/* Actions Floating */}
                             <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
                                 {isComplete && (
-                                    <button onClick={() => onOpenFolder(item.outputDir)} className="p-1.5 rounded-lg hover:bg-foreground/10 text-foreground/60 hover:text-foreground" title="Show in Folder">
+                                    <button onClick={() => onOpenFolder(item.outputDir)} className="p-1.5 rounded-lg hover:bg-foreground/10 text-foreground/60 hover:text-foreground" title={t('downloadCard.showInFolder')}>
                                         <Folder className="w-4 h-4" />
                                     </button>
                                 )}
                                 {isActive && onPause && (
-                                    <button onClick={() => onPause(item.id)} className="p-1.5 rounded-lg hover:bg-warning/20 text-foreground/60 hover:text-warning" title="Pause">
+                                    <button onClick={() => onPause(item.id)} className="p-1.5 rounded-lg hover:bg-warning/20 text-foreground/60 hover:text-warning" title={t('downloadCard.pause')}>
                                         <Pause className="w-4 h-4" />
                                     </button>
                                 )}
                                 {isPaused && onResume && (
-                                    <button onClick={() => onResume(item.id)} className="p-1.5 rounded-lg hover:bg-success/20 text-foreground/60 hover:text-success" title="Resume">
+                                    <button onClick={() => onResume(item.id)} className="p-1.5 rounded-lg hover:bg-success/20 text-foreground/60 hover:text-success" title={t('downloadCard.resume')}>
                                         <Play className="w-4 h-4" />
                                     </button>
                                 )}
                                 {canBoost && onBoost && (
-                                    <button onClick={() => onBoost(item.id)} className="p-1.5 rounded-lg hover:bg-primary/20 text-foreground/60 hover:text-primary" title="Boost Turbo (resume-safe)">
+                                    <button onClick={() => onBoost(item.id)} className="p-1.5 rounded-lg hover:bg-primary/20 text-foreground/60 hover:text-primary" title={t('downloadCard.boost')}>
                                         <Zap className="w-4 h-4" />
                                     </button>
                                 )}
                                 {(isActive || isPaused || isError) && (
-                                    <button onClick={() => onCancel(item.id)} className="p-1.5 rounded-lg hover:bg-error/20 text-foreground/60 hover:text-error" title="Cancel (deletes partial files)">
+                                    <button onClick={() => onCancel(item.id)} className="p-1.5 rounded-lg hover:bg-error/20 text-foreground/60 hover:text-error" title={t('downloadCard.cancel')}>
                                         <X className="w-4 h-4" />
                                     </button>
                                 )}
                                 {isError && onRetry && (
-                                    <button onClick={() => onRetry(item.id)} className="p-1.5 rounded-lg hover:bg-success/20 text-foreground/60 hover:text-success" title="Retry">
+                                    <button onClick={() => onRetry(item.id)} className="p-1.5 rounded-lg hover:bg-success/20 text-foreground/60 hover:text-success" title={t('downloadCard.retry')}>
                                         <RefreshCw className="w-4 h-4" />
                                     </button>
                                 )}
@@ -245,13 +247,13 @@ const DownloadCard: React.FC<DownloadCardProps> = ({ item, onCancel, onPause, on
                     {/* Status & Footer */}
                     <div className="flex items-center justify-between mt-2">
                         <div className="text-xs">
-                            {isComplete && <span className="text-success flex items-center gap-1"><Check className="w-3 h-3" /> Completed</span>}
-                            {isError && <span className="text-error flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {item.error || 'Failed'}</span>}
-                            {isPaused && <span className="text-warning flex items-center gap-1"><Pause className="w-3 h-3" /> Paused - {item.progress.toFixed(1)}%</span>}
+                            {isComplete && <span className="text-success flex items-center gap-1"><Check className="w-3 h-3" /> {t('downloadCard.completed')}</span>}
+                            {isError && <span className="text-error flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {item.error || t('downloadCard.failed')}</span>}
+                            {isPaused && <span className="text-warning flex items-center gap-1"><Pause className="w-3 h-3" /> {t('downloadCard.paused')} - {item.progress.toFixed(1)}%</span>}
                             {isActive && (
                                 <span className={cn(isRetrying ? 'text-warning' : 'text-foreground/60')}>
                                     {item.progress.toFixed(1)}%
-                                    {item.eta && ((isRetrying || isFinalizing) ? ` • ${item.eta}` : ` • ${item.eta} remaining`)}
+                                    {item.eta && ((isRetrying || isFinalizing) ? ` • ${item.eta}` : ` • ${item.eta} ${t('downloadCard.remaining')}`)}
                                 </span>
                             )}
                         </div>
@@ -263,30 +265,30 @@ const DownloadCard: React.FC<DownloadCardProps> = ({ item, onCancel, onPause, on
                                 <button
                                     onClick={() => onRetry(item.id)}
                                     className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-success/15 hover:bg-success/25 text-success"
-                                    title="Retry this download"
+                                    title={t('downloadCard.retryThis')}
                                 >
                                     <RefreshCw className="w-3 h-3" />
-                                    Retry
+                                    {t('downloadCard.retryBtn')}
                                 </button>
                             )}
 
                             <button
                                 onClick={() => void handleCopyDiagnostics()}
                                 className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-white/6 hover:bg-white/10 text-foreground/75"
-                                title="Copy download diagnostics"
+                                title={t('downloadCard.copyDiagnostics')}
                             >
                                 <Copy className="w-3 h-3" />
-                                {copiedDiagnostics ? 'Copied' : 'Copy Details'}
+                                {copiedDiagnostics ? t('downloadCard.copiedDetails') : t('downloadCard.copyDetails')}
                             </button>
 
                             {troubleshootingLink && (
                                 <button
                                     onClick={() => void handleOpenGuide()}
                                     className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-primary/15 hover:bg-primary/25 text-primary"
-                                    title="Open dependency install guide"
+                                    title={t('downloadCard.openGuide')}
                                 >
                                     <ExternalLink className="w-3 h-3" />
-                                    Install Guide
+                                    {t('downloadCard.installGuide')}
                                 </button>
                             )}
                         </div>

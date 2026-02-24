@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, Folder, Download, History, Subtitles, Music2, Tag, Globe, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Moon, Sun, Folder, Download, History, Subtitles, Music2, Tag, Globe, Loader2, CheckCircle, XCircle, Languages } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useDownloads } from '../context/DownloadContext';
 import { cn } from '../lib/utils';
+import { useTranslation } from 'react-i18next';
+import { SUPPORTED_LANGUAGES } from '../i18n/i18n';
 
 // Window types are defined in vite-env.d.ts
 
@@ -76,6 +78,7 @@ const LANGUAGES = [
 ];
 
 const SettingsPanel: React.FC = () => {
+    const { t, i18n } = useTranslation();
     const { theme, toggleTheme } = useTheme();
     const { settings, updateSettings, history, clearHistory, getAvailableBrowsers, validateBrowserCookies } = useDownloads();
     const [browsers, setBrowsers] = useState<{ id: string; name: string }[]>([]);
@@ -130,9 +133,7 @@ const SettingsPanel: React.FC = () => {
 
     const handleToggleHistory = () => {
         if (settings.historyEnabled) {
-            const shouldDisable = window.confirm(
-                'Disable download history?\n\nFor privacy, existing history will be removed immediately.'
-            );
+            const shouldDisable = window.confirm(t('settings.disableHistoryConfirm'));
 
             if (!shouldDisable) {
                 return;
@@ -212,19 +213,43 @@ const SettingsPanel: React.FC = () => {
     return (
         <div className="h-full w-full bg-transparent p-8 overflow-auto">
             <div className="max-w-2xl mx-auto">
-                <h1 className="text-2xl font-bold mb-2">Settings</h1>
-                <p className="text-foreground/60 mb-8">Customize your download experience</p>
+                <h1 className="text-2xl font-bold mb-2">{t('settings.title')}</h1>
+                <p className="text-foreground/60 mb-8">{t('settings.subtitle')}</p>
+
+                {/* Language Section */}
+                <div className="mb-8">
+                    <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
+                        {t('settings.languageSection')}
+                    </h2>
+                    <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
+                        <SettingsRow
+                            icon={<Languages className="w-4 h-4" />}
+                            title={t('settings.uiLanguage')}
+                            description={t('settings.uiLanguageDesc')}
+                        >
+                            <select
+                                value={i18n.language}
+                                onChange={(e) => i18n.changeLanguage(e.target.value)}
+                                className="px-3 py-1.5 rounded-lg bg-secondary border border-white/10 text-sm focus:outline-none focus:border-primary"
+                            >
+                                {SUPPORTED_LANGUAGES.map(lang => (
+                                    <option key={lang.code} value={lang.code}>{lang.flag} {lang.name}</option>
+                                ))}
+                            </select>
+                        </SettingsRow>
+                    </div>
+                </div>
 
                 {/* Appearance Section */}
                 <div className="mb-8">
                     <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
-                        Appearance
+                        {t('settings.appearanceSection')}
                     </h2>
                     <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
                         <SettingsRow
                             icon={theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-                            title="Dark Mode"
-                            description="Toggle between dark and light theme"
+                            title={t('settings.darkMode')}
+                            description={t('settings.darkModeDesc')}
                         >
                             <Toggle enabled={theme === 'dark'} onToggle={toggleTheme} />
                         </SettingsRow>
@@ -234,51 +259,51 @@ const SettingsPanel: React.FC = () => {
                 {/* Downloads Section */}
                 <div className="mb-8">
                     <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
-                        Downloads
+                        {t('settings.downloadsSection')}
                     </h2>
                     <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
                         <SettingsRow
                             icon={<Folder className="w-4 h-4" />}
-                            title="Download Location"
+                            title={t('settings.downloadLocation')}
                             description={downloadLocation
-                                ? `Preferred folder: ${downloadLocation.path}`
-                                : 'Choose your preferred default folder'}
+                                ? t('settings.preferredFolder', { path: downloadLocation.path })
+                                : t('settings.chooseFolderDesc')}
                         >
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={handleSelectDownloadLocation}
                                     className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors"
                                 >
-                                    Change
+                                    {t('settings.change')}
                                 </button>
                                 {!downloadLocation?.isDefault && (
                                     <button
                                         onClick={handleResetDownloadLocation}
                                         className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors"
                                     >
-                                        Reset
+                                        {t('settings.reset')}
                                     </button>
                                 )}
                                 <button
                                     onClick={handleOpenDownloads}
                                     className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors"
                                 >
-                                    Open
+                                    {t('settings.open')}
                                 </button>
                             </div>
                         </SettingsRow>
 
                         <SettingsRow
                             icon={<Download className="w-4 h-4" />}
-                            title="Default Quality"
-                            description="Preferred quality for video downloads"
+                            title={t('settings.defaultQuality')}
+                            description={t('settings.defaultQualityDesc')}
                         >
                             <select
                                 value={settings.defaultQuality}
                                 onChange={handleDefaultQualityChange}
                                 className="px-3 py-1.5 rounded-lg bg-secondary border border-white/10 text-sm focus:outline-none focus:border-primary"
                             >
-                                <option value="best">Best Available</option>
+                                <option value="best">{t('settings.bestAvailable')}</option>
                                 <option value="2160">4K (2160p)</option>
                                 <option value="1440">QHD (1440p)</option>
                                 <option value="1080">FHD (1080p)</option>
@@ -289,10 +314,10 @@ const SettingsPanel: React.FC = () => {
 
                         <SettingsRow
                             icon={<Download className="w-4 h-4" />}
-                            title="Turbo Download"
-                            description="Use concurrent fragments and optional aria2c multi-connection mode"
+                            title={t('settings.turboDownload')}
+                            description={t('settings.turboDownloadDesc')}
                             beta
-                            betaNote="Requires source support. For best speed, install aria2 and keep this enabled."
+                            betaNote={t('settings.turboDownloadNote')}
                         >
                             <Toggle enabled={settings.enableTurboDownload} onToggle={handleToggleTurboDownload} />
                         </SettingsRow>
@@ -301,22 +326,21 @@ const SettingsPanel: React.FC = () => {
                             <>
                                 <SettingsRow
                                     icon={<Download className="w-4 h-4" />}
-                                    title="Turbo Mode"
-                                    description="Auto adjusts connections based on CPU and active downloads"
+                                    title={t('settings.turboMode')}
+                                    description={t('settings.turboModeDesc')}
                                 >
                                     <select
                                         value={settings.adaptiveTurboDownload ? 'auto' : 'manual'}
                                         onChange={(e) => updateSettings({ adaptiveTurboDownload: e.target.value === 'auto' })}
                                         className="px-3 py-1.5 rounded-lg bg-secondary border border-white/10 text-sm focus:outline-none focus:border-primary"
                                     >
-                                        <option value="auto">Auto (recommended)</option>
-                                        <option value="manual">Manual</option>
+                                        <option value="auto">{t('settings.autoRecommended')}</option>
+                                        <option value="manual">{t('settings.manual')}</option>
                                     </select>
                                 </SettingsRow>
 
                                 <div className="px-1 pb-3 text-xs text-foreground/55 leading-relaxed">
-                                    Auto is best for most users and prevents aggressive connection spikes during multiple downloads.
-                                    Use Manual for stable high-bandwidth networks when you want fixed maximum speed for one download.
+                                    {t('settings.turboAutoExplanation')}
                                 </div>
                             </>
                         )}
@@ -324,8 +348,8 @@ const SettingsPanel: React.FC = () => {
                         {settings.enableTurboDownload && !settings.adaptiveTurboDownload && (
                             <SettingsRow
                                 icon={<Download className="w-4 h-4" />}
-                                title="Turbo Connections"
-                                description="Higher values can improve speed but may increase throttling on some sites"
+                                title={t('settings.turboConnections')}
+                                description={t('settings.turboConnectionsDesc')}
                             >
                                 <select
                                     value={String(settings.turboConnections)}
@@ -345,15 +369,15 @@ const SettingsPanel: React.FC = () => {
                 {/* Subtitles Section */}
                 <div className="mb-8">
                     <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
-                        Subtitles
+                        {t('settings.subtitlesSection')}
                     </h2>
                     <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
                         <SettingsRow
                             icon={<Subtitles className="w-4 h-4" />}
-                            title="Embed Subtitles"
-                            description="Automatically embed subtitles in downloaded videos"
+                            title={t('settings.embedSubtitles')}
+                            description={t('settings.embedSubtitlesDesc')}
                             beta
-                            betaNote="May not work for all sources. Subtitle tracks and auto-captions depend on site support."
+                            betaNote={t('settings.embedSubtitlesNote')}
                         >
                             <Toggle enabled={settings.embedSubtitles} onToggle={handleToggleSubtitles} />
                         </SettingsRow>
@@ -361,10 +385,10 @@ const SettingsPanel: React.FC = () => {
                         {settings.embedSubtitles && (
                             <SettingsRow
                                 icon={<Globe className="w-4 h-4" />}
-                                title="Subtitle Languages"
-                                description="Preferred languages for subtitles"
+                                title={t('settings.subtitleLanguages')}
+                                description={t('settings.subtitleLanguagesDesc')}
                                 beta
-                                betaNote="Language availability varies by source. Auto and original language can be inconsistent across sites."
+                                betaNote={t('settings.subtitleLanguagesNote')}
                             >
                                 <select
                                     multiple
@@ -385,15 +409,15 @@ const SettingsPanel: React.FC = () => {
                 {/* Audio Section */}
                 <div className="mb-8">
                     <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
-                        Audio
+                        {t('settings.audioSection')}
                     </h2>
                     <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
                         <SettingsRow
                             icon={<Music2 className="w-4 h-4" />}
-                            title="Alternative Audio Tracks"
-                            description="Embed additional audio tracks in different languages"
+                            title={t('settings.altAudioTracks')}
+                            description={t('settings.altAudioTracksDesc')}
                             beta
-                            betaNote="Best effort only. Multi-audio extraction support depends on the source and extractor."
+                            betaNote={t('settings.altAudioTracksNote')}
                         >
                             <Toggle enabled={settings.embedAltAudio} onToggle={handleToggleAltAudio} />
                         </SettingsRow>
@@ -401,10 +425,10 @@ const SettingsPanel: React.FC = () => {
                         {settings.embedAltAudio && (
                             <SettingsRow
                                 icon={<Globe className="w-4 h-4" />}
-                                title="Preferred Audio Language"
-                                description="Primary audio language preference"
+                                title={t('settings.preferredAudioLang')}
+                                description={t('settings.preferredAudioLangDesc')}
                                 beta
-                                betaNote="Best effort only. If language-specific streams are unavailable, default audio is used."
+                                betaNote={t('settings.preferredAudioLangNote')}
                             >
                                 <select
                                     value={settings.preferredAudioLang}
@@ -423,25 +447,25 @@ const SettingsPanel: React.FC = () => {
                 {/* Metadata Section */}
                 <div className="mb-8">
                     <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
-                        Metadata
+                        {t('settings.metadataSection')}
                     </h2>
                     <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
                         <SettingsRow
                             icon={<Tag className="w-4 h-4" />}
-                            title="Keep Original Thumbnail"
-                            description="Best effort: download/embed website thumbnail; Windows Explorer previews may still vary"
+                            title={t('settings.keepThumbnail')}
+                            description={t('settings.keepThumbnailDesc')}
                             beta
-                            betaNote="Thumbnail embedding depends on media container, ffmpeg availability, and OS preview behavior."
+                            betaNote={t('settings.keepThumbnailNote')}
                         >
                             <Toggle enabled={settings.preserveThumbnail} onToggle={handleToggleThumbnail} />
                         </SettingsRow>
 
                         <SettingsRow
                             icon={<Tag className="w-4 h-4" />}
-                            title="Embed Media Tags"
-                            description="Include title, artist, thumbnail in downloaded files"
+                            title={t('settings.embedMediaTags')}
+                            description={t('settings.embedMediaTagsDesc')}
                             beta
-                            betaNote="Metadata embedding support varies by source format and container type."
+                            betaNote={t('settings.embedMediaTagsNote')}
                         >
                             <Toggle enabled={settings.embedMetadata} onToggle={handleToggleMetadata} />
                         </SettingsRow>
@@ -451,15 +475,15 @@ const SettingsPanel: React.FC = () => {
                 {/* Account/Authentication Section */}
                 <div className="mb-8">
                     <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
-                        Account
+                        {t('settings.accountSection')}
                     </h2>
                     <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
                         <SettingsRow
                             icon={<Globe className="w-4 h-4" />}
-                            title="Browser Cookies"
-                            description="Use cookies from browser for private content access"
+                            title={t('settings.browserCookies')}
+                            description={t('settings.browserCookiesDesc')}
                             beta
-                            betaNote="Browser integration may fail depending on OS permissions, browser profile state, or site changes."
+                            betaNote={t('settings.browserCookiesNote')}
                         >
                             <div className="flex items-center gap-2">
                                 <select
@@ -467,7 +491,7 @@ const SettingsPanel: React.FC = () => {
                                     onChange={handleBrowserChange}
                                     className="px-3 py-1.5 rounded-lg bg-secondary border border-white/10 text-sm focus:outline-none focus:border-primary"
                                 >
-                                    <option value="">Don't use cookies</option>
+                                    <option value="">{t('settings.noCookies')}</option>
                                     {browsers.map(browser => (
                                         <option key={browser.id} value={browser.id}>{browser.name}</option>
                                     ))}
@@ -488,32 +512,103 @@ const SettingsPanel: React.FC = () => {
                         </SettingsRow>
                         {settings.cookiesFromBrowser && cookieStatus === 'valid' && (
                             <div className="mt-2 p-2 bg-green-500/10 rounded-lg text-xs text-green-400">
-                                ✓ Connected! You can now download private and age-restricted content.
+                                ✓ {t('settings.cookieConnected')}
                             </div>
                         )}
                         {settings.cookiesFromBrowser && cookieStatus === 'invalid' && (
                             <div className="mt-2 p-2 bg-red-500/10 rounded-lg text-xs text-red-400">
-                                Could not verify cookies. Make sure you're logged in to YouTube in the selected browser.
+                                {t('settings.cookieInvalid')}
                             </div>
                         )}
                         {settings.cookiesFromBrowser && cookieStatus === 'unknown' && (
                             <div className="mt-2 p-2 bg-warning/10 rounded-lg text-xs text-warning">
-                                Cookie check was inconclusive. Download may still work, but browser access could be limited.
+                                {t('settings.cookieUnknown')}
                             </div>
                         )}
+                    </div>
+                </div>
+
+                {/* File Naming Section */}
+                <div className="mb-8">
+                    <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
+                        {t('settings.fileNamingSection')}
+                    </h2>
+                    <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
+                        <SettingsRow
+                            icon={<Tag className="w-4 h-4" />}
+                            title={t('settings.fileNameTemplate')}
+                            description={t('settings.fileNameTemplateDesc')}
+                        >
+                            <input
+                                type="text"
+                                value={settings.fileNameTemplate}
+                                onChange={(e) => updateSettings({ fileNameTemplate: e.target.value })}
+                                placeholder="{title}"
+                                className="px-3 py-1.5 rounded-lg bg-secondary border border-white/10 text-sm focus:outline-none focus:border-primary w-48"
+                            />
+                        </SettingsRow>
+                        <div className="px-1 pb-2 text-xs text-foreground/45 leading-relaxed space-y-1">
+                            <p>{t('settings.availableVariables')}: <code className="text-primary/80 bg-white/5 px-1 rounded">{'{title}'}</code> <code className="text-primary/80 bg-white/5 px-1 rounded">{'{quality}'}</code> <code className="text-primary/80 bg-white/5 px-1 rounded">{'{date}'}</code> <code className="text-primary/80 bg-white/5 px-1 rounded">{'{uploader}'}</code></p>
+                            <p className="text-foreground/35">{t('settings.preview')}: <span className="text-foreground/50">
+                                {settings.fileNameTemplate
+                                    .replace(/\{title\}/g, 'My Video')
+                                    .replace(/\{quality\}/g, '1080')
+                                    .replace(/\{date\}/g, new Date().toISOString().slice(0, 10))
+                                    .replace(/\{uploader\}/g, 'Channel Name')
+                                }.mp4</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Notifications Section */}
+                <div className="mb-8">
+                    <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
+                        {t('settings.notificationsSection')}
+                    </h2>
+                    <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
+                        <SettingsRow
+                            icon={<Download className="w-4 h-4" />}
+                            title={t('settings.desktopNotifications')}
+                            description={t('settings.desktopNotificationsDesc')}
+                        >
+                            <Toggle enabled={settings.enableNotifications} onToggle={() => updateSettings({ enableNotifications: !settings.enableNotifications })} />
+                        </SettingsRow>
+                    </div>
+                </div>
+
+                {/* Keyboard Shortcuts Section */}
+                <div className="mb-8">
+                    <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
+                        {t('settings.keyboardSection')}
+                    </h2>
+                    <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
+                        <div className="space-y-3 text-sm">
+                            {[
+                                { keys: 'Ctrl + V', action: t('settings.shortcutHome') },
+                                { keys: 'Ctrl + D', action: t('settings.shortcutDownloads') },
+                                { keys: 'Ctrl + H', action: t('settings.shortcutHistory') },
+                                { keys: 'Ctrl + ,', action: t('settings.shortcutSettings') },
+                                { keys: 'Escape', action: t('settings.shortcutEscape') },
+                            ].map(({ keys, action }) => (
+                                <div key={keys} className="flex items-center justify-between py-1.5">
+                                    <span className="text-foreground/60">{action}</span>
+                                    <kbd className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-foreground/70 font-mono text-xs">{keys}</kbd>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
                 {/* History Section */}
                 <div className="mb-8">
                     <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
-                        History
+                        {t('settings.historySection')}
                     </h2>
                     <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
                         <SettingsRow
                             icon={<History className="w-4 h-4" />}
-                            title="Enable Download History"
-                            description="Keep track of your completed downloads"
+                            title={t('settings.enableHistory')}
+                            description={t('settings.enableHistoryDesc')}
                         >
                             <Toggle enabled={settings.historyEnabled} onToggle={handleToggleHistory} />
                         </SettingsRow>
@@ -521,14 +616,14 @@ const SettingsPanel: React.FC = () => {
                         {settings.historyEnabled && history.length > 0 && (
                             <SettingsRow
                                 icon={<History className="w-4 h-4" />}
-                                title="Clear History"
-                                description={`${history.length} item${history.length === 1 ? '' : 's'} in history`}
+                                title={t('settings.clearHistory')}
+                                description={t('settings.historyItemCount', { count: history.length })}
                             >
                                 <button
                                     onClick={clearHistory}
                                     className="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-sm transition-colors"
                                 >
-                                    Clear All
+                                    {t('settings.clearAll')}
                                 </button>
                             </SettingsRow>
                         )}

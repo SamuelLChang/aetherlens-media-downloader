@@ -669,6 +669,86 @@
       display: none !important;
     }
 
+    /* ── Language Selector ── */
+    .lang-wrap {
+      position: relative;
+    }
+
+    .lang-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-2);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .lang-btn:hover {
+      border-color: var(--border-focus);
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    .lang-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .lang-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 150px;
+      padding: 0.35rem;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition: opacity 0.15s, visibility 0.15s, transform 0.15s;
+      z-index: 50;
+    }
+
+    .lang-dropdown.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .lang-opt {
+      display: block;
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      border: none;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--text-2);
+      font-family: inherit;
+      font-size: 0.82rem;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+    }
+
+    .lang-opt:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    .lang-opt.active {
+      color: var(--blue);
+      font-weight: 600;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 860px) {
 
@@ -729,17 +809,29 @@
         <span>AetherLens</span>
       </a>
       <nav class="topnav" aria-label="Quick links">
-        <a href="#downloads">Downloads</a>
-        <a href="#features">Features</a>
-        <a href="#screenshots">Screenshots</a>
+        <a href="#downloads" data-i18n="nav.downloads">Downloads</a>
+        <a href="#features" data-i18n="nav.features">Features</a>
+        <a href="#screenshots" data-i18n="nav.screenshots">Screenshots</a>
         <a href="https://github.com/SamuelLChang/aetherlens-media-downloader" target="_blank" rel="noreferrer"
           class="gh">
           <svg class="gh-icon" viewBox="0 0 16 16" fill="currentColor">
             <path
               d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
           </svg>
-          Source
+          <span data-i18n="nav.source">Source</span>
         </a>
+        <div class="lang-wrap">
+          <button class="lang-btn" id="lang-toggle" type="button" aria-label="Change language">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+            </svg>
+            <span id="lang-label">EN</span>
+          </button>
+          <div class="lang-dropdown" id="lang-dropdown"></div>
+        </div>
       </nav>
     </div>
   </header>
@@ -747,9 +839,9 @@
   <div class="wrap">
     <main>
       <section class="hero">
-        <div class="hero-tag">// open-source &amp; cross-platform</div>
-        <h1>A cleaner way to <em>download media.</em></h1>
-        <p class="hero-desc">
+        <div class="hero-tag" data-i18n-html="hero.tag">// open-source &amp; cross-platform</div>
+        <h1 data-i18n-html="hero.title">A cleaner way to <em>download media.</em></h1>
+        <p class="hero-desc" data-i18n="hero.desc">
           Paste a link, pick a format, let AetherLens handle the rest.
           Electron + yt-dlp under the hood, a proper queue on the surface.
         </p>
@@ -761,22 +853,22 @@
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            Download
+            <span data-i18n="hero.downloadBtn">Download</span>
           </a>
-          <a class="btn btn-ghost" href="#screenshots">See it first</a>
+          <a class="btn btn-ghost" href="#screenshots" data-i18n="hero.seeFirst">See it first</a>
         </div>
         <div class="stats">
           <div>
             <div class="stat-val">MIT</div>
-            <div class="stat-lbl">License</div>
+            <div class="stat-lbl" data-i18n="stats.license">License</div>
           </div>
           <div>
             <div class="stat-val">Win / Mac / Linux</div>
-            <div class="stat-lbl">Platforms</div>
+            <div class="stat-lbl" data-i18n="stats.platforms">Platforms</div>
           </div>
           <div>
             <div class="stat-val">yt-dlp</div>
-            <div class="stat-lbl">Backend</div>
+            <div class="stat-lbl" data-i18n="stats.backend">Backend</div>
           </div>
         </div>
       </section>
@@ -784,12 +876,12 @@
       <!-- Downloads -->
       <section class="sect reveal" id="downloads">
         <div class="sect-top">
-          <div class="sect-label">Downloads</div>
-          <h2>Grab the installer</h2>
-          <p class="sect-desc">Pulled from the latest GitHub release. Pick your OS.</p>
+          <div class="sect-label" data-i18n="downloads.label">Downloads</div>
+          <h2 data-i18n="downloads.title">Grab the installer</h2>
+          <p class="sect-desc" data-i18n="downloads.desc">Pulled from the latest GitHub release. Pick your OS.</p>
         </div>
         <div class="dl-tag">
-          <span class="dl-tag-inner" id="status">loading…</span>
+          <span class="dl-tag-inner" id="status" data-i18n="downloads.loading">loading…</span>
         </div>
         <div class="dl-row" id="download-cards"></div>
       </section>
@@ -797,9 +889,10 @@
       <!-- Features -->
       <section class="sect reveal" id="features">
         <div class="sect-top">
-          <div class="sect-label">Features</div>
-          <h2>What it does</h2>
-          <p class="sect-desc">URL analysis, format picking, queue management — no terminal needed.</p>
+          <div class="sect-label" data-i18n="features.label">Features</div>
+          <h2 data-i18n="features.title">What it does</h2>
+          <p class="sect-desc" data-i18n="features.desc">URL analysis, format picking, queue management — no terminal
+            needed.</p>
         </div>
         <div class="feat-grid">
           <article class="feat">
@@ -810,8 +903,9 @@
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
             </div>
-            <h3>URL metadata preview</h3>
-            <p>See title, duration, and available formats before downloading anything.</p>
+            <h3 data-i18n="features.metadataTitle">URL metadata preview</h3>
+            <p data-i18n="features.metadataDesc">See title, duration, and available formats before downloading anything.
+            </p>
           </article>
           <article class="feat">
             <div class="feat-ico">
@@ -822,8 +916,8 @@
                 <line x1="10" y1="4" x2="10" y2="20" />
               </svg>
             </div>
-            <h3>Format &amp; quality control</h3>
-            <p>Pick audio or video profiles — no guessing, no re-downloads.</p>
+            <h3 data-i18n="features.formatTitle">Format &amp; quality control</h3>
+            <p data-i18n="features.formatDesc">Pick audio or video profiles — no guessing, no re-downloads.</p>
           </article>
           <article class="feat">
             <div class="feat-ico">
@@ -837,8 +931,9 @@
                 <line x1="3" y1="18" x2="3.01" y2="18" />
               </svg>
             </div>
-            <h3>Playlist &amp; batch support</h3>
-            <p>Select specific items from channels and playlists instead of grabbing everything.</p>
+            <h3 data-i18n="features.playlistTitle">Playlist &amp; batch support</h3>
+            <p data-i18n="features.playlistDesc">Select specific items from channels and playlists instead of grabbing
+              everything.</p>
           </article>
           <article class="feat">
             <div class="feat-ico">
@@ -848,8 +943,8 @@
                 <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
               </svg>
             </div>
-            <h3>Queue management</h3>
-            <p>Pause, resume, retry, or cancel — everything lives in one screen.</p>
+            <h3 data-i18n="features.queueTitle">Queue management</h3>
+            <p data-i18n="features.queueDesc">Pause, resume, retry, or cancel — everything lives in one screen.</p>
           </article>
           <article class="feat">
             <div class="feat-ico">
@@ -859,8 +954,8 @@
                   d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
               </svg>
             </div>
-            <h3>Setup wizard</h3>
-            <p>First-run flow handles dependencies so you don't touch a terminal.</p>
+            <h3 data-i18n="features.wizardTitle">Setup wizard</h3>
+            <p data-i18n="features.wizardDesc">First-run flow handles dependencies so you don't touch a terminal.</p>
           </article>
           <article class="feat">
             <div class="feat-ico">
@@ -870,8 +965,8 @@
                 <polyline points="12 6 12 12 16 14" />
               </svg>
             </div>
-            <h3>Persistent history</h3>
-            <p>Past downloads and preferences stick around between sessions.</p>
+            <h3 data-i18n="features.historyTitle">Persistent history</h3>
+            <p data-i18n="features.historyDesc">Past downloads and preferences stick around between sessions.</p>
           </article>
         </div>
       </section>
@@ -879,26 +974,29 @@
       <!-- Screenshots -->
       <section class="sect reveal" id="screenshots">
         <div class="sect-top">
-          <div class="sect-label">Preview</div>
-          <h2>What you're installing</h2>
-          <p class="sect-desc">Actual captures from the app.</p>
+          <div class="sect-label" data-i18n="screenshots.label">Preview</div>
+          <h2 data-i18n="screenshots.title">What you're installing</h2>
+          <p class="sect-desc" data-i18n="screenshots.desc">Actual captures from the app.</p>
         </div>
         <div class="shots">
           <figure class="shot">
             <img src="../screenshots/home-preview.png" alt="Home screen with URL preview" loading="lazy" />
-            <figcaption>Home — paste a URL, see metadata, download.</figcaption>
+            <figcaption data-i18n="screenshots.homeCaption">Home — paste a URL, see metadata, download.</figcaption>
           </figure>
           <figure class="shot">
             <img src="../screenshots/format-selector.png" alt="Format and quality selector" loading="lazy" />
-            <figcaption>Format picker — choose codec, resolution, container.</figcaption>
+            <figcaption data-i18n="screenshots.formatCaption">Format picker — choose codec, resolution, container.
+            </figcaption>
           </figure>
           <figure class="shot">
             <img src="../screenshots/playlist-modal.png" alt="Playlist modal" loading="lazy" />
-            <figcaption>Playlist selector — pick items from a batch.</figcaption>
+            <figcaption data-i18n="screenshots.playlistCaption">Playlist selector — pick items from a batch.
+            </figcaption>
           </figure>
           <figure class="shot">
             <img src="../screenshots/downloads-queue.png" alt="Downloads queue" loading="lazy" />
-            <figcaption>Queue — progress, pause, retry, all in one place.</figcaption>
+            <figcaption data-i18n="screenshots.queueCaption">Queue — progress, pause, retry, all in one place.
+            </figcaption>
           </figure>
         </div>
       </section>
@@ -906,29 +1004,29 @@
       <!-- How it works -->
       <section class="sect reveal" id="workflow">
         <div class="sect-top">
-          <div class="sect-label">Workflow</div>
-          <h2>Four steps, start to finish</h2>
+          <div class="sect-label" data-i18n="workflow.label">Workflow</div>
+          <h2 data-i18n="workflow.title">Four steps, start to finish</h2>
         </div>
         <div class="steps">
           <article class="stp">
             <div class="stp-n">01</div>
-            <h3>Install</h3>
-            <p>Run the installer, follow the setup wizard.</p>
+            <h3 data-i18n="workflow.step1Title">Install</h3>
+            <p data-i18n="workflow.step1Desc">Run the installer, follow the setup wizard.</p>
           </article>
           <article class="stp">
             <div class="stp-n">02</div>
-            <h3>Paste</h3>
-            <p>Drop a URL — metadata and formats load automatically.</p>
+            <h3 data-i18n="workflow.step2Title">Paste</h3>
+            <p data-i18n="workflow.step2Desc">Drop a URL — metadata and formats load automatically.</p>
           </article>
           <article class="stp">
             <div class="stp-n">03</div>
-            <h3>Configure</h3>
-            <p>Set format, quality, and output folder.</p>
+            <h3 data-i18n="workflow.step3Title">Configure</h3>
+            <p data-i18n="workflow.step3Desc">Set format, quality, and output folder.</p>
           </article>
           <article class="stp">
             <div class="stp-n">04</div>
-            <h3>Download</h3>
-            <p>Hit go. Track progress in the queue.</p>
+            <h3 data-i18n="workflow.step4Title">Download</h3>
+            <p data-i18n="workflow.step4Desc">Hit go. Track progress in the queue.</p>
           </article>
         </div>
       </section>
@@ -936,11 +1034,11 @@
 
     <footer class="foot">
       <p>
-        All binaries available on
+        <span data-i18n="footer.releasesText">All binaries available on</span>
         <a id="release-page" href="https://github.com/SamuelLChang/aetherlens-media-downloader/releases" target="_blank"
-          rel="noreferrer">GitHub Releases</a>.
+          rel="noreferrer" data-i18n="footer.releasesLink">GitHub Releases</a>.
       </p>
-      <p class="foot-warn">
+      <p class="foot-warn" data-i18n-html="footer.warning">
         You may see a signing warning on first launch — the app is open-source
         and not commercially code-signed. On Windows click <strong>More info → Run anyway</strong>,
         on macOS use <strong>System Settings → Open Anyway</strong>.
@@ -953,33 +1051,118 @@
     aria-labelledby="safety-modal-title" hidden>
     <div class="modal">
       <div class="modal-head">
-        <span class="modal-badge">download started</span>
-        <button id="safety-modal-close" class="btn btn-sm modal-close" type="button">Close</button>
+        <span class="modal-badge" data-i18n="modal.badge">download started</span>
+        <button id="safety-modal-close" class="btn btn-sm modal-close" type="button"
+          data-i18n="modal.close">Close</button>
       </div>
-      <h3 id="safety-modal-title">About installer warnings</h3>
-      <p>
+      <h3 id="safety-modal-title" data-i18n="modal.title">About installer warnings</h3>
+      <p data-i18n="modal.body">
         Your download has started. Windows and macOS may show a trust warning
         because AetherLens isn't commercially code-signed — that's a signing
         cost thing, not a safety issue.
       </p>
       <div class="modal-verify">
-        <strong>Quick checks</strong>
+        <strong data-i18n="modal.checksTitle">Quick checks</strong>
         <ul>
-          <li>Only use links from this page or official GitHub releases.</li>
-          <li>Compare release tags and commits in the repo.</li>
-          <li>Read the source if you want full confidence.</li>
+          <li data-i18n="modal.check1">Only use links from this page or official GitHub releases.</li>
+          <li data-i18n="modal.check2">Compare release tags and commits in the repo.</li>
+          <li data-i18n="modal.check3">Read the source if you want full confidence.</li>
         </ul>
       </div>
       <div class="modal-actions">
         <a class="modal-link" href="https://github.com/SamuelLChang/aetherlens-media-downloader" target="_blank"
-          rel="noreferrer">View source</a>
-        <button class="btn btn-fill btn-sm" type="button" id="safety-modal-confirm">Got it</button>
+          rel="noreferrer" data-i18n="modal.viewSource">View source</a>
+        <button class="btn btn-fill btn-sm" type="button" id="safety-modal-confirm" data-i18n="modal.gotIt">Got
+          it</button>
       </div>
     </div>
   </div>
 
   <script>
-    /* OS detection */
+    /* ── i18n engine ── */
+    const LANGS = [
+      { code: 'en', label: 'English' },
+      { code: 'tr', label: 'Türkçe' },
+      { code: 'es', label: 'Español' },
+      { code: 'fr', label: 'Français' },
+      { code: 'de', label: 'Deutsch' },
+      { code: 'ja', label: '日本語' },
+      { code: 'ko', label: '한국어' },
+      { code: 'zh', label: '中文' },
+      { code: 'pt', label: 'Português' },
+      { code: 'ru', label: 'Русский' },
+    ];
+    const LANG_CODES = LANGS.map(l => l.code);
+    let currentLang = 'en';
+    let currentStrings = null;
+
+    function detectLang() {
+      const stored = localStorage.getItem('al-site-lang');
+      if (stored && LANG_CODES.includes(stored)) return stored;
+      const nav = (navigator.language || '').slice(0, 2).toLowerCase();
+      return LANG_CODES.includes(nav) ? nav : 'en';
+    }
+
+    function resolve(obj, path) {
+      return path.split('.').reduce((o, k) => o && o[k], obj);
+    }
+
+    function applyStrings(strings) {
+      currentStrings = strings;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const val = resolve(strings, el.dataset.i18n);
+        if (val) el.textContent = val;
+      });
+      document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const val = resolve(strings, el.dataset.i18nHtml);
+        if (val) el.innerHTML = val;
+      });
+    }
+
+    async function setLang(code) {
+      try {
+        const res = await fetch(`./locales/${code}.json`);
+        if (!res.ok) throw new Error(res.status);
+        const strings = await res.json();
+        currentLang = code;
+        localStorage.setItem('al-site-lang', code);
+        document.documentElement.lang = code;
+        applyStrings(strings);
+        document.getElementById('lang-label').textContent = code.toUpperCase();
+        document.querySelectorAll('.lang-opt').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.lang === code);
+        });
+      } catch (e) {
+        if (code !== 'en') setLang('en');
+      }
+    }
+
+    /* Build language dropdown */
+    const langDropdown = document.getElementById('lang-dropdown');
+    LANGS.forEach(({ code, label }) => {
+      const btn = document.createElement('button');
+      btn.className = 'lang-opt';
+      btn.dataset.lang = code;
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        setLang(code);
+        langDropdown.classList.remove('open');
+      });
+      langDropdown.appendChild(btn);
+    });
+
+    const langToggle = document.getElementById('lang-toggle');
+    langToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      langDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', () => langDropdown.classList.remove('open'));
+    langDropdown.addEventListener('click', (e) => e.stopPropagation());
+
+    /* Initialize language */
+    setLang(detectLang());
+
+    /* ── OS detection ── */
     const ua = navigator.userAgent || '';
     const userOS = /Win/i.test(ua) ? 'windows' : /Mac/i.test(ua) ? 'macos' : /Linux/i.test(ua) ? 'linux' : null;
 
@@ -1012,8 +1195,12 @@
     backdrop.addEventListener('click', e => { if (e.target === backdrop) hideNotice(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !backdrop.hidden) hideNotice(); });
 
-    /* Release loader */
+    /* Release loader — uses i18n strings for dynamic cards */
     const osLabel = { windows: '🪟', macos: '🍎', linux: '🐧' };
+
+    function t(key) {
+      return (currentStrings && resolve(currentStrings, key)) || key.split('.').pop();
+    }
 
     function mkBtn(href, label, fill, safety) {
       const a = document.createElement('a');
@@ -1029,23 +1216,23 @@
       if (userOS === key) c.classList.add('mine');
 
       const rec = document.createElement('span');
-      rec.className = 'dl-rec'; rec.textContent = '→ your OS';
+      rec.className = 'dl-rec'; rec.textContent = t('downloads.yourOS');
       c.appendChild(rec);
 
       const ico = document.createElement('div');
       ico.className = 'dl-os'; ico.textContent = osLabel[key] || '';
       c.appendChild(ico);
 
-      const h = document.createElement('h3'); h.textContent = title; c.appendChild(h);
-      const p = document.createElement('p'); p.className = 'dl-sub'; p.textContent = hint; c.appendChild(p);
+      const h = document.createElement('h3'); h.textContent = t(`downloads.${key}`); c.appendChild(h);
+      const p = document.createElement('p'); p.className = 'dl-sub'; p.textContent = t(`downloads.${key}Hint`); c.appendChild(p);
 
       if (asset) {
-        c.appendChild(mkBtn(asset.browser_download_url, 'Download', true, true));
+        c.appendChild(mkBtn(asset.browser_download_url, t('downloads.downloadBtn'), true, true));
       } else {
         const m = document.createElement('p');
-        m.className = 'dl-sub'; m.style.marginTop = '0.4rem'; m.textContent = 'Not in latest release.';
+        m.className = 'dl-sub'; m.style.marginTop = '0.4rem'; m.textContent = t('downloads.notInRelease');
         c.appendChild(m);
-        c.appendChild(mkBtn('https://github.com/SamuelLChang/aetherlens-media-downloader/releases', 'Releases', false, false));
+        c.appendChild(mkBtn('https://github.com/SamuelLChang/aetherlens-media-downloader/releases', t('downloads.releases'), false, false));
       }
       cardsEl.appendChild(c);
     }
@@ -1065,7 +1252,7 @@
         addCard('macos', 'macOS', '.dmg disk image', match(a, /mac.*\.dmg$/i));
         addCard('linux', 'Linux', '.AppImage portable', match(a, /linux.*\.AppImage$/i));
       } catch (e) {
-        statusEl.textContent = 'could not load release';
+        statusEl.textContent = t('downloads.couldNotLoad');
         addCard('windows', 'Windows', '.exe installer', null);
         addCard('macos', 'macOS', '.dmg disk image', null);
         addCard('linux', 'Linux', '.AppImage portable', null);

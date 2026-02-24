@@ -1,0 +1,92 @@
+{
+    "nav": {
+        "downloads": "Téléchargements",
+        "features": "Fonctionnalités",
+        "screenshots": "Captures d'écran",
+        "source": "Source"
+    },
+    "hero": {
+        "tag": "// open-source & multiplateforme",
+        "title": "Une façon plus propre de <em>télécharger des médias.</em>",
+        "desc": "Collez un lien, choisissez un format, laissez AetherLens faire le reste. Electron + yt-dlp sous le capot, une file d'attente soignée en surface.",
+        "downloadBtn": "Télécharger",
+        "seeFirst": "Voir d'abord"
+    },
+    "stats": {
+        "license": "Licence",
+        "platforms": "Plateformes",
+        "backend": "Moteur"
+    },
+    "downloads": {
+        "label": "Téléchargements",
+        "title": "Télécharger l'installateur",
+        "desc": "Depuis la dernière version GitHub. Choisissez votre OS.",
+        "loading": "chargement…",
+        "yourOS": "→ votre OS",
+        "windows": "Windows",
+        "macos": "macOS",
+        "linux": "Linux",
+        "windowsHint": "installateur .exe",
+        "macosHint": "image disque .dmg",
+        "linuxHint": ".AppImage portable",
+        "downloadBtn": "Télécharger",
+        "notInRelease": "Absent de la dernière version.",
+        "releases": "Versions",
+        "couldNotLoad": "impossible de charger la version"
+    },
+    "features": {
+        "label": "Fonctionnalités",
+        "title": "Ce qu'il fait",
+        "desc": "Analyse d'URL, choix de format, gestion de file d'attente — pas de terminal nécessaire.",
+        "metadataTitle": "Aperçu des métadonnées",
+        "metadataDesc": "Voyez le titre, la durée et les formats disponibles avant de télécharger.",
+        "formatTitle": "Contrôle format & qualité",
+        "formatDesc": "Choisissez un profil audio ou vidéo — pas de devinettes, pas de re-téléchargements.",
+        "playlistTitle": "Support playlists & lots",
+        "playlistDesc": "Sélectionnez des éléments spécifiques des chaînes et playlists au lieu de tout prendre.",
+        "queueTitle": "Gestion de file d'attente",
+        "queueDesc": "Pause, reprise, nouvelle tentative ou annulation — tout sur un seul écran.",
+        "wizardTitle": "Assistant de configuration",
+        "wizardDesc": "Le premier lancement gère les dépendances pour que vous n'ayez pas à toucher un terminal.",
+        "historyTitle": "Historique persistant",
+        "historyDesc": "Les téléchargements passés et les préférences sont conservés entre les sessions."
+    },
+    "screenshots": {
+        "label": "Aperçu",
+        "title": "Ce que vous installez",
+        "desc": "Captures réelles de l'application.",
+        "homeCaption": "Accueil — collez une URL, voyez les métadonnées, téléchargez.",
+        "formatCaption": "Sélecteur de format — choisissez codec, résolution, conteneur.",
+        "playlistCaption": "Sélecteur de playlist — choisissez les éléments d'un lot.",
+        "queueCaption": "File d'attente — progression, pause, nouvelle tentative, tout en un."
+    },
+    "workflow": {
+        "label": "Flux de travail",
+        "title": "Quatre étapes, du début à la fin",
+        "step1Title": "Installer",
+        "step1Desc": "Lancez l'installateur, suivez l'assistant de configuration.",
+        "step2Title": "Coller",
+        "step2Desc": "Déposez une URL — métadonnées et formats se chargent automatiquement.",
+        "step3Title": "Configurer",
+        "step3Desc": "Définissez le format, la qualité et le dossier de sortie.",
+        "step4Title": "Télécharger",
+        "step4Desc": "Lancez. Suivez la progression dans la file d'attente."
+    },
+    "footer": {
+        "releasesText": "Tous les binaires disponibles sur",
+        "releasesLink": "GitHub Releases",
+        "warning": "Un avertissement de signature peut apparaître au premier lancement — l'application est open-source et n'est pas signée commercialement. Sur Windows cliquez sur <strong>Plus d'infos → Exécuter quand même</strong>, sur macOS utilisez <strong>Réglages Système → Ouvrir quand même</strong>."
+    },
+    "modal": {
+        "badge": "téléchargement démarré",
+        "title": "À propos des avertissements d'installation",
+        "body": "Votre téléchargement a commencé. Windows et macOS peuvent afficher un avertissement de confiance car AetherLens n'est pas signé commercialement — c'est une question de coût de signature, pas de sécurité.",
+        "checksTitle": "Vérifications rapides",
+        "check1": "N'utilisez que les liens de cette page ou des versions officielles GitHub.",
+        "check2": "Comparez les tags de version et les commits dans le dépôt.",
+        "check3": "Lisez le code source pour une confiance totale.",
+        "viewSource": "Voir le source",
+        "gotIt": "Compris",
+        "close": "Fermer"
+    }
+}

@@ -1,0 +1,92 @@
+{
+    "nav": {
+        "downloads": "Downloads",
+        "features": "Features",
+        "screenshots": "Screenshots",
+        "source": "Source"
+    },
+    "hero": {
+        "tag": "// open-source & cross-platform",
+        "title": "A cleaner way to <em>download media.</em>",
+        "desc": "Paste a link, pick a format, let AetherLens handle the rest. Electron + yt-dlp under the hood, a proper queue on the surface.",
+        "downloadBtn": "Download",
+        "seeFirst": "See it first"
+    },
+    "stats": {
+        "license": "License",
+        "platforms": "Platforms",
+        "backend": "Backend"
+    },
+    "downloads": {
+        "label": "Downloads",
+        "title": "Grab the installer",
+        "desc": "Pulled from the latest GitHub release. Pick your OS.",
+        "loading": "loading…",
+        "yourOS": "→ your OS",
+        "windows": "Windows",
+        "macos": "macOS",
+        "linux": "Linux",
+        "windowsHint": ".exe installer",
+        "macosHint": ".dmg disk image",
+        "linuxHint": ".AppImage portable",
+        "downloadBtn": "Download",
+        "notInRelease": "Not in latest release.",
+        "releases": "Releases",
+        "couldNotLoad": "could not load release"
+    },
+    "features": {
+        "label": "Features",
+        "title": "What it does",
+        "desc": "URL analysis, format picking, queue management — no terminal needed.",
+        "metadataTitle": "URL metadata preview",
+        "metadataDesc": "See title, duration, and available formats before downloading anything.",
+        "formatTitle": "Format & quality control",
+        "formatDesc": "Pick audio or video profiles — no guessing, no re-downloads.",
+        "playlistTitle": "Playlist & batch support",
+        "playlistDesc": "Select specific items from channels and playlists instead of grabbing everything.",
+        "queueTitle": "Queue management",
+        "queueDesc": "Pause, resume, retry, or cancel — everything lives in one screen.",
+        "wizardTitle": "Setup wizard",
+        "wizardDesc": "First-run flow handles dependencies so you don't touch a terminal.",
+        "historyTitle": "Persistent history",
+        "historyDesc": "Past downloads and preferences stick around between sessions."
+    },
+    "screenshots": {
+        "label": "Preview",
+        "title": "What you're installing",
+        "desc": "Actual captures from the app.",
+        "homeCaption": "Home — paste a URL, see metadata, download.",
+        "formatCaption": "Format picker — choose codec, resolution, container.",
+        "playlistCaption": "Playlist selector — pick items from a batch.",
+        "queueCaption": "Queue — progress, pause, retry, all in one place."
+    },
+    "workflow": {
+        "label": "Workflow",
+        "title": "Four steps, start to finish",
+        "step1Title": "Install",
+        "step1Desc": "Run the installer, follow the setup wizard.",
+        "step2Title": "Paste",
+        "step2Desc": "Drop a URL — metadata and formats load automatically.",
+        "step3Title": "Configure",
+        "step3Desc": "Set format, quality, and output folder.",
+        "step4Title": "Download",
+        "step4Desc": "Hit go. Track progress in the queue."
+    },
+    "footer": {
+        "releasesText": "All binaries available on",
+        "releasesLink": "GitHub Releases",
+        "warning": "You may see a signing warning on first launch — the app is open-source and not commercially code-signed. On Windows click <strong>More info → Run anyway</strong>, on macOS use <strong>System Settings → Open Anyway</strong>."
+    },
+    "modal": {
+        "badge": "download started",
+        "title": "About installer warnings",
+        "body": "Your download has started. Windows and macOS may show a trust warning because AetherLens isn't commercially code-signed — that's a signing cost thing, not a safety issue.",
+        "checksTitle": "Quick checks",
+        "check1": "Only use links from this page or official GitHub releases.",
+        "check2": "Compare release tags and commits in the repo.",
+        "check3": "Read the source if you want full confidence.",
+        "viewSource": "View source",
+        "gotIt": "Got it",
+        "close": "Close"
+    }
+}

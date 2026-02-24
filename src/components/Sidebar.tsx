@@ -1,6 +1,7 @@
 import React from 'react';
 import { Home, Download, Clock, Settings, Info, ShieldCheck } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface SidebarProps {
     currentPage: string;
@@ -13,16 +14,6 @@ interface NavItem {
     label: string;
     icon: React.ReactNode;
 }
-
-const navItems: NavItem[] = [
-    { id: 'home', label: 'Home', icon: <Home className="w-5 h-5" /> },
-    { id: 'downloads', label: 'Downloads', icon: <Download className="w-5 h-5" /> },
-    { id: 'history', label: 'History', icon: <Clock className="w-5 h-5" /> },
-    { id: 'system', label: 'System', icon: <ShieldCheck className="w-5 h-5" /> },
-    { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
-];
-
-const infoNavItem: NavItem = { id: 'info', label: 'Info', icon: <Info className="w-5 h-5" /> };
 
 const NavButton: React.FC<{
     item: NavItem;
@@ -70,6 +61,18 @@ const NavButton: React.FC<{
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, showInfoBadge = false }) => {
+    const { t } = useTranslation();
+
+    const navItems: NavItem[] = [
+        { id: 'home', label: t('sidebar.home'), icon: <Home className="w-5 h-5" /> },
+        { id: 'downloads', label: t('sidebar.downloads'), icon: <Download className="w-5 h-5" /> },
+        { id: 'history', label: t('sidebar.history'), icon: <Clock className="w-5 h-5" /> },
+        { id: 'system', label: t('sidebar.system'), icon: <ShieldCheck className="w-5 h-5" /> },
+        { id: 'settings', label: t('sidebar.settings'), icon: <Settings className="w-5 h-5" /> },
+    ];
+
+    const infoNavItem: NavItem = { id: 'info', label: t('sidebar.info'), icon: <Info className="w-5 h-5" /> };
+
     return (
         <aside
             className="h-full w-16 bg-secondary/40 border-r border-foreground/5 flex flex-col backdrop-blur-md"

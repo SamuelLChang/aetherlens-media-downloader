@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Minus, X, Maximize2 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Home from '../pages/Home';
@@ -32,6 +33,7 @@ const isPage = (value: string): value is Page => {
 };
 
 const Layout: React.FC = () => {
+    const { t } = useTranslation();
     const [currentPage, setCurrentPage] = useState<Page>('home');
     const [showSetupWizard, setShowSetupWizard] = useState(false);
     const [hasAvailableUpdate, setHasAvailableUpdate] = useState(false);
@@ -106,6 +108,53 @@ const Layout: React.FC = () => {
         };
     }, []);
 
+    // ==================== KEYBOARD SHORTCUTS ====================
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Don't trigger shortcuts when typing in input fields
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+                return;
+            }
+
+            const ctrlOrMeta = e.ctrlKey || e.metaKey;
+
+            if (e.key === 'Escape') {
+                if (showSetupWizard) {
+                    handleSetupClose();
+                } else if (showWhatsNew) {
+                    handleWhatsNewClose();
+                }
+                return;
+            }
+
+            if (ctrlOrMeta && !e.shiftKey && !e.altKey) {
+                switch (e.key.toLowerCase()) {
+                    case 'v':
+                        // Navigate to home for paste
+                        setCurrentPage('home');
+                        // Don't prevent default — let the OS paste into the URL input
+                        return;
+                    case 'd':
+                        e.preventDefault();
+                        setCurrentPage('downloads');
+                        return;
+                    case 'h':
+                        e.preventDefault();
+                        setCurrentPage('history');
+                        return;
+                    case ',':
+                        e.preventDefault();
+                        setCurrentPage('settings');
+                        return;
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showSetupWizard, showWhatsNew]);
+
     const handleSetupClose = () => {
         localStorage.setItem(SETUP_COMPLETE_STORAGE_KEY, 'true');
         setShowSetupWizard(false);
@@ -161,21 +210,21 @@ const Layout: React.FC = () => {
                     <button
                         onClick={handleMinimize}
                         className="p-2 rounded-md hover:bg-foreground/10 text-foreground/60 hover:text-foreground transition-colors"
-                        title="Minimize"
+                        title={t('titlebar.minimize')}
                     >
                         <Minus className="w-4 h-4" />
                     </button>
                     <button
                         onClick={handleMaximize}
                         className="p-2 rounded-md hover:bg-foreground/10 text-foreground/60 hover:text-foreground transition-colors"
-                        title="Maximize"
+                        title={t('titlebar.maximize')}
                     >
                         <Maximize2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={handleClose}
                         className="p-2 rounded-md hover:bg-error/15 text-foreground/60 hover:text-error transition-colors"
-                        title="Close"
+                        title={t('titlebar.close')}
                     >
                         <X className="w-4 h-4" />
                     </button>

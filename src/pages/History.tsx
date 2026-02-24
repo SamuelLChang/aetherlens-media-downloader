@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, Calendar, Download, Trash2, RefreshCw, XCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useDownloads, HistoryItem } from '../context/DownloadContext';
+import { useTranslation } from 'react-i18next';
 
 const formatDate = (isoString: string): string => {
     const date = new Date(isoString);
@@ -14,6 +15,7 @@ const formatDate = (isoString: string): string => {
 };
 
 const History: React.FC = () => {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = React.useState('');
     const { history, removeFromHistory, clearHistory, addDownload, settings } = useDownloads();
 
@@ -29,18 +31,18 @@ const History: React.FC = () => {
         return (
             <div className="page-shell gap-6">
                 <div className="surface-card p-6 lg:p-7">
-                    <p className="section-title mb-2">Archive</p>
-                    <h1 className="text-2xl font-semibold tracking-tight mb-1">Download History</h1>
-                    <p className="text-foreground/60">Previously downloaded media and quick re-download shortcuts.</p>
+                    <p className="section-title mb-2">{t('history.sectionTitle')}</p>
+                    <h1 className="text-2xl font-semibold tracking-tight mb-1">{t('history.pageTitle')}</h1>
+                    <p className="text-foreground/60">{t('history.description')}</p>
                 </div>
 
                 <div className="surface-card flex-1 flex flex-col items-center justify-center text-center p-8">
                     <div className="p-4 rounded-full bg-secondary/60 border border-foreground/10 mb-4">
                         <XCircle className="w-8 h-8 text-foreground/30" />
                     </div>
-                    <h3 className="font-medium text-foreground/70 mb-1">History is disabled</h3>
+                    <h3 className="font-medium text-foreground/70 mb-1">{t('history.historyDisabled')}</h3>
                     <p className="text-sm text-foreground/45 max-w-xs">
-                        Enable history in Settings to track your downloads.
+                        {t('history.historyDisabledDesc')}
                     </p>
                 </div>
             </div>
@@ -52,10 +54,10 @@ const History: React.FC = () => {
             <div className="surface-card p-6 lg:p-7">
                 <div className="flex items-center justify-between mb-5">
                     <div>
-                        <p className="section-title mb-2">Archive</p>
-                        <h1 className="text-2xl font-semibold tracking-tight mb-1">Download History</h1>
+                        <p className="section-title mb-2">{t('history.sectionTitle')}</p>
+                        <h1 className="text-2xl font-semibold tracking-tight mb-1">{t('history.pageTitle')}</h1>
                         <p className="text-foreground/60">
-                            {history.length} {history.length === 1 ? 'download' : 'downloads'} saved
+                            {t('history.downloadsSaved', { count: history.length })}
                         </p>
                     </div>
 
@@ -65,7 +67,7 @@ const History: React.FC = () => {
                             className="btn-danger"
                         >
                             <Trash2 className="w-4 h-4" />
-                            Clear All
+                            {t('history.clearAll')}
                         </button>
                     )}
                 </div>
@@ -78,7 +80,7 @@ const History: React.FC = () => {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search history..."
+                            placeholder={t('history.searchPlaceholder')}
                             className="soft-input pl-10 pr-4 py-2.5"
                         />
                     </div>
@@ -91,14 +93,14 @@ const History: React.FC = () => {
                     <div className="p-4 rounded-full bg-secondary/60 border border-foreground/10 mb-4">
                         <Calendar className="w-8 h-8 text-foreground/30" />
                     </div>
-                    <h3 className="font-medium text-foreground/70 mb-1">No history yet</h3>
+                    <h3 className="font-medium text-foreground/70 mb-1">{t('history.noHistory')}</h3>
                     <p className="text-sm text-foreground/45 max-w-xs">
-                        Completed downloads will appear here. Start downloading to build your history!
+                        {t('history.noHistoryDesc')}
                     </p>
                 </div>
             ) : filteredHistory.length === 0 && searchQuery ? (
                 <div className="surface-card flex-1 flex flex-col items-center justify-center text-center p-8">
-                    <p className="text-sm text-foreground/50">No results matching "{searchQuery}"</p>
+                    <p className="text-sm text-foreground/50">{t('history.noResults', { query: searchQuery })}</p>
                 </div>
             ) : (
                 <div className="surface-card flex-1 overflow-auto p-4 space-y-3">
@@ -128,7 +130,7 @@ const History: React.FC = () => {
                                             item.format === 'photo' ? "bg-pink-500/20 text-pink-400" :
                                                 "bg-primary/20 text-primary"
                                     )}>
-                                        {item.format === 'audio' ? 'MP3' : item.format === 'photo' ? 'Photo' : item.quality ? `${item.quality}p` : 'Video'}
+                                        {item.format === 'audio' ? 'MP3' : item.format === 'photo' ? t('history.photo') : item.quality ? `${item.quality}p` : t('history.video')}
                                     </span>
                                     <span>•</span>
                                     <span>{formatDate(item.completedAt)}</span>
@@ -140,14 +142,14 @@ const History: React.FC = () => {
                                 <button
                                     onClick={() => handleRedownload(item)}
                                     className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/60 hover:text-foreground transition-colors"
-                                    title="Download again"
+                                    title={t('history.downloadAgain')}
                                 >
                                     <RefreshCw className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => removeFromHistory(item.id)}
                                     className="p-2 rounded-lg hover:bg-red-500/20 text-foreground/60 hover:text-red-400 transition-colors"
-                                    title="Remove from history"
+                                    title={t('history.removeFromHistory')}
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>

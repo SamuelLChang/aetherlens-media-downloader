@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { AlertTriangle, FileText, Gavel, ShieldCheck, Target, ArrowUpCircle, Monitor, RefreshCw, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Info: React.FC = () => {
+    const { t } = useTranslation();
     const [appVersion, setAppVersion] = useState('0.0.0');
     const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
     const [updateError, setUpdateError] = useState('');
@@ -32,7 +34,7 @@ const Info: React.FC = () => {
 
     const checkForUpdates = async (_manual = true) => {
         if (!window.electronAPI?.checkForUpdates) {
-            setUpdateError('Update check is unavailable in this build.');
+            setUpdateError(t('info.updateCheckUnavailable'));
             return;
         }
 
@@ -45,11 +47,11 @@ const Info: React.FC = () => {
                 setUpdateInfo(result.data);
             } else {
                 setUpdateInfo(null);
-                setUpdateError(result.error || 'Unable to check for updates.');
+                setUpdateError(result.error || t('info.unableToCheck'));
             }
         } catch {
             setUpdateInfo(null);
-            setUpdateError('Unable to check for updates.');
+            setUpdateError(t('info.unableToCheck'));
         } finally {
             setIsCheckingUpdates(false);
         }
@@ -72,12 +74,12 @@ const Info: React.FC = () => {
                 <div className="flex items-start gap-3">
                     <ArrowUpCircle className="w-5 h-5 text-primary mt-0.5" />
                     <div className="w-full">
-                        <p className="section-title">App & Updates</p>
+                        <p className="section-title">{t('info.appAndUpdates')}</p>
                         <div className="mt-3 p-4 rounded-xl border border-white/10 bg-secondary/20">
                             <div className="flex items-center justify-between gap-3 flex-wrap">
                                 <div className="flex items-center gap-2 text-sm text-foreground/70">
                                     <Monitor className="w-4 h-4" />
-                                    <span>Version {appVersion} • Built with Electron + React</span>
+                                    <span>{t('info.versionInfo', { version: appVersion })}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {updateInfo?.updateAvailable && (
@@ -85,7 +87,7 @@ const Info: React.FC = () => {
                                             onClick={handleOpenUpdatePage}
                                             className="px-3 py-1.5 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 text-sm transition-colors"
                                         >
-                                            Update
+                                            {t('info.update')}
                                         </button>
                                     )}
                                     <button
@@ -98,7 +100,7 @@ const Info: React.FC = () => {
                                         ) : (
                                             <RefreshCw className="w-3.5 h-3.5" />
                                         )}
-                                        Check now
+                                        {t('info.checkNow')}
                                     </button>
                                 </div>
                             </div>
@@ -106,19 +108,19 @@ const Info: React.FC = () => {
                             <p className="text-sm text-foreground/70 mt-3">
                                 {updateInfo
                                     ? updateInfo.updateAvailable
-                                        ? `Update available: v${updateInfo.latestVersion} (current v${updateInfo.currentVersion})`
-                                        : `You're up to date on v${updateInfo.currentVersion}`
-                                    : updateError || 'Checking for latest release...'}
+                                        ? t('info.updateAvailable', { latest: updateInfo.latestVersion, current: updateInfo.currentVersion })
+                                        : t('info.upToDate', { version: updateInfo.currentVersion })
+                                    : updateError || t('info.checking')}
                             </p>
 
                             {updateInfo?.updateAvailable && (
                                 <div className="mt-3 p-2 bg-primary/10 rounded-lg text-xs text-primary">
-                                    A new version is available. Click Update to open the download page and install the latest version.
+                                    {t('info.updateAvailableDesc')}
                                 </div>
                             )}
                             {!updateInfo?.updateAvailable && updateInfo && (
                                 <div className="mt-3 p-2 bg-green-500/10 rounded-lg text-xs text-green-400">
-                                    You're on the latest available release.
+                                    {t('info.latestRelease')}
                                 </div>
                             )}
                             {updateError && (
@@ -135,14 +137,12 @@ const Info: React.FC = () => {
                 <div className="flex items-start gap-3">
                     <Target className="w-5 h-5 text-primary mt-0.5" />
                     <div>
-                        <p className="section-title">Program Purpose</p>
+                        <p className="section-title">{t('info.programPurpose')}</p>
                         <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-foreground mt-1">
-                            AetherLens Media Downloader
+                            {t('info.appName')}
                         </h1>
                         <p className="text-foreground/70 text-sm leading-relaxed mt-3 max-w-3xl">
-                            AetherLens is built to help users save media they are authorized to keep, organize, and access offline.
-                            The app focuses on a reliable desktop workflow for metadata preview, quality selection, playlist handling,
-                            and resumable downloads.
+                            {t('info.appDescription')}
                         </p>
                     </div>
                 </div>
@@ -152,12 +152,12 @@ const Info: React.FC = () => {
                 <div className="flex items-start gap-3">
                     <FileText className="w-5 h-5 text-accent mt-0.5" />
                     <div>
-                        <p className="section-title">Development Aim</p>
+                        <p className="section-title">{t('info.developmentAim')}</p>
                         <ul className="text-sm text-foreground/70 leading-relaxed mt-2 space-y-2 list-disc pl-5">
-                            <li>Provide a clear and fast user experience for legitimate personal downloads.</li>
-                            <li>Keep the desktop client stable across common video and playlist sources.</li>
-                            <li>Expose practical controls: pause, resume, retry, format choice, and quality preference.</li>
-                            <li>Improve transparency by showing metadata before users start a download.</li>
+                            <li>{t('info.aim1')}</li>
+                            <li>{t('info.aim2')}</li>
+                            <li>{t('info.aim3')}</li>
+                            <li>{t('info.aim4')}</li>
                         </ul>
                     </div>
                 </div>
@@ -167,13 +167,12 @@ const Info: React.FC = () => {
                 <div className="flex items-start gap-3">
                     <Gavel className="w-5 h-5 text-warning mt-0.5" />
                     <div>
-                        <p className="section-title">Legal Responsibility</p>
+                        <p className="section-title">{t('info.legalResponsibility')}</p>
                         <p className="text-sm text-foreground/75 leading-relaxed mt-2">
-                            Users are responsible for complying with copyright law, local regulations, and each platform's terms of service.
-                            This software is not intended to bypass DRM, paywalls, or access controls.
+                            {t('info.legalText1')}
                         </p>
                         <p className="text-sm text-foreground/75 leading-relaxed mt-2">
-                            If you do not own the content or have explicit permission/license to download it, do not download it.
+                            {t('info.legalText2')}
                         </p>
                     </div>
                 </div>
@@ -183,11 +182,11 @@ const Info: React.FC = () => {
                 <div className="flex items-start gap-3">
                     <ShieldCheck className="w-5 h-5 text-success mt-0.5" />
                     <div>
-                        <p className="section-title">Security Notes</p>
+                        <p className="section-title">{t('info.securityNotes')}</p>
                         <ul className="text-sm text-foreground/70 leading-relaxed mt-2 space-y-2 list-disc pl-5">
-                            <li>The project should never ship with embedded API keys or private credentials.</li>
-                            <li>Browser cookie usage is optional and only for user-controlled authenticated access.</li>
-                            <li>Before publishing, always re-scan for secrets and keep build artifacts out of git.</li>
+                            <li>{t('info.security1')}</li>
+                            <li>{t('info.security2')}</li>
+                            <li>{t('info.security3')}</li>
                         </ul>
                     </div>
                 </div>
@@ -197,7 +196,7 @@ const Info: React.FC = () => {
                 <div className="flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-error mt-0.5" />
                     <p className="text-sm text-foreground/80 leading-relaxed">
-                        This page is informational and not legal advice. For commercial or high-risk usage, consult a qualified legal professional.
+                        {t('info.disclaimer')}
                     </p>
                 </div>
             </section>

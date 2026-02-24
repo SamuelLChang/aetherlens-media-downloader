@@ -2,8 +2,10 @@ import React from 'react';
 import { Download, FolderOpen, Pause, Play, Trash2, X } from 'lucide-react';
 import { useDownloads } from '../context/DownloadContext';
 import DownloadCard from '../components/DownloadCard';
+import { useTranslation } from 'react-i18next';
 
 const Downloads: React.FC = () => {
+    const { t } = useTranslation();
     const {
         downloads,
         cancelDownload,
@@ -38,16 +40,16 @@ const Downloads: React.FC = () => {
             <div className="surface-card p-6 lg:p-7">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <p className="section-title mb-2">Download Queue</p>
-                        <h1 className="text-2xl font-semibold tracking-tight">Downloads</h1>
+                        <p className="section-title mb-2">{t('downloads.sectionTitle')}</p>
+                        <h1 className="text-2xl font-semibold tracking-tight">{t('downloads.pageTitle')}</h1>
                         <p className="text-foreground/60 mt-1">
-                            Monitor active transfers and completed output in one place.
+                            {t('downloads.description')}
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <span className="stats-chip">{activeDownloads.length} active</span>
-                        <span className="stats-chip">{completedDownloads.length} completed</span>
+                        <span className="stats-chip">{activeDownloads.length} {t('downloads.active')}</span>
+                        <span className="stats-chip">{completedDownloads.length} {t('downloads.completed')}</span>
                     </div>
                 </div>
 
@@ -57,7 +59,7 @@ const Downloads: React.FC = () => {
                         className="btn-ghost"
                     >
                         <FolderOpen className="w-4 h-4" />
-                        Open Folder
+                        {t('downloads.openFolder')}
                     </button>
                     {activeDownloads.length > 0 && (
                         <>
@@ -65,27 +67,27 @@ const Downloads: React.FC = () => {
                                 onClick={() => void stopAllDownloads().catch(console.error)}
                                 className="btn-ghost"
                                 disabled={stoppableCount === 0}
-                                title={stoppableCount === 0 ? 'No running downloads to stop' : 'Stop all running downloads'}
+                                title={stoppableCount === 0 ? t('downloads.noRunningToStop') : t('downloads.stopAllRunning')}
                             >
                                 <Pause className="w-4 h-4" />
-                                Stop All
+                                {t('downloads.stopAll')}
                             </button>
                             <button
                                 onClick={() => void resumeAllDownloads().catch(console.error)}
                                 className="btn-ghost"
                                 disabled={resumableCount === 0}
-                                title={resumableCount === 0 ? 'No paused downloads to resume' : 'Resume all paused downloads'}
+                                title={resumableCount === 0 ? t('downloads.noPausedToResume') : t('downloads.resumeAllPaused')}
                             >
                                 <Play className="w-4 h-4" />
-                                Resume All
+                                {t('downloads.resumeAll')}
                             </button>
                             <button
                                 onClick={() => void cancelAllDownloads().catch(console.error)}
                                 className="btn-danger"
-                                title="Cancel all active and paused downloads"
+                                title={t('downloads.cancelAllActive')}
                             >
                                 <X className="w-4 h-4" />
-                                Cancel All
+                                {t('downloads.cancelAll')}
                             </button>
                         </>
                     )}
@@ -95,7 +97,7 @@ const Downloads: React.FC = () => {
                             className="btn-danger"
                         >
                             <Trash2 className="w-4 h-4" />
-                            Clear Completed
+                            {t('downloads.clearCompleted')}
                         </button>
                     )}
                 </div>
@@ -105,7 +107,7 @@ const Downloads: React.FC = () => {
             {activeDownloads.length > 0 && (
                 <div className="surface-card p-5 lg:p-6">
                     <h2 className="text-sm font-semibold text-foreground/60 uppercase tracking-wider mb-4">
-                        Active Downloads
+                        {t('downloads.activeDownloads')}
                     </h2>
                     <div className="space-y-3">
                         {activeDownloads.map(item => (
@@ -127,7 +129,7 @@ const Downloads: React.FC = () => {
             {completedDownloads.length > 0 && (
                 <div className="surface-card p-5 lg:p-6">
                     <h2 className="text-sm font-semibold text-foreground/60 uppercase tracking-wider mb-4">
-                        Completed
+                        {t('downloads.completedSection')}
                     </h2>
                     <div className="space-y-3">
                         {completedDownloads.map(item => (
@@ -149,9 +151,9 @@ const Downloads: React.FC = () => {
                     <div className="p-4 rounded-full bg-secondary/60 mb-4 border border-foreground/10">
                         <Download className="w-8 h-8 text-foreground/35" />
                     </div>
-                    <h3 className="font-medium text-foreground/70 mb-1">No downloads yet</h3>
+                    <h3 className="font-medium text-foreground/70 mb-1">{t('downloads.noDownloads')}</h3>
                     <p className="text-sm text-foreground/45 max-w-xs">
-                        Start from Home by pasting a media URL and choosing your preferred format.
+                        {t('downloads.noDownloadsDesc')}
                     </p>
                 </div>
             )}

@@ -74,6 +74,10 @@ export interface DownloadSettings {
     enableTurboDownload: boolean;
     adaptiveTurboDownload: boolean;
     turboConnections: number;
+    // File naming
+    fileNameTemplate: string;
+    // Notifications
+    enableNotifications: boolean;
 }
 
 interface DownloadContextType {
@@ -124,6 +128,10 @@ const defaultSettings: DownloadSettings = {
     enableTurboDownload: false,
     adaptiveTurboDownload: false,
     turboConnections: 8,
+    // File naming
+    fileNameTemplate: '{title}',
+    // Notifications
+    enableNotifications: true,
 };
 
 const DownloadContext = createContext<DownloadContextType | undefined>(undefined);
@@ -226,6 +234,15 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     useEffect(() => {
         scheduleSave(SETTINGS_STORAGE_KEY, settings, settingsSaveTimer);
     }, [settings, scheduleSave]);
+
+    // Sync notification settings to main process
+    useEffect(() => {
+        if (window.electronAPI?.updateNotificationSettings) {
+            window.electronAPI.updateNotificationSettings(settings.enableNotifications);
+        } else if (window.ipcRenderer) {
+            window.ipcRenderer.invoke('update-notification-settings', settings.enableNotifications);
+        }
+    }, [settings.enableNotifications]);
 
     // Add completed download to history
     const addToHistory = useCallback((item: DownloadItem) => {
@@ -446,6 +463,7 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 adaptiveTurboDownload: adaptiveTurbo,
                 turboConnections,
                 outputDir: parsedOptions.outputDir,
+                fileNameTemplate: settings.fileNameTemplate,
             };
             seededDownloadId = downloadOptions.id;
 

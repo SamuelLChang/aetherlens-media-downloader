@@ -33,6 +33,7 @@ const invokeChannels = new Set([
   'check-for-updates',
   'get-runtime-dependencies-status',
   'open-external-url',
+  'update-notification-settings',
 ])
 
 // --------- Expose some API to the Renderer process ---------
@@ -94,4 +95,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Setup wizard helpers
   getRuntimeDependenciesStatus: () => ipcRenderer.invoke('get-runtime-dependencies-status'),
   openExternalUrl: (url: string) => ipcRenderer.invoke('open-external-url', url),
+
+  // Notification settings
+  updateNotificationSettings: (enabled: boolean) => ipcRenderer.invoke('update-notification-settings', enabled),
 })

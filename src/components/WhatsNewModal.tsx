@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface WhatsNewModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface WhatsNewModalProps {
 }
 
 const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, version, onClose }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
@@ -15,12 +17,12 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, version, onClose 
       <div className="w-full max-w-2xl panel p-6 lg:p-7 border border-foreground/15 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="section-title">What&apos;s New</p>
+            <p className="section-title">{t('whatsNew.title')}</p>
             <h2 className="text-xl lg:text-2xl font-semibold mt-2">
-              Welcome to v{version || 'latest'}
+              {t('whatsNew.welcome', { version: version || 'latest' })}
             </h2>
             <p className="text-sm text-foreground/70 mt-2 max-w-xl">
-              This update focuses on first-run clarity, better recovery after failures, and easier update visibility.
+              {t('whatsNew.description')}
             </p>
           </div>
 
@@ -37,37 +39,37 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, version, onClose 
           <div className="surface-subtle p-4">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Sparkles className="w-4 h-4 text-primary" />
-              Better first-run setup flow
+              {t('whatsNew.feature1Title')}
             </div>
             <p className="text-xs text-foreground/65 mt-1">
-              Required dependency checks are clearer, and limited mode now requires explicit confirmation.
+              {t('whatsNew.feature1Desc')}
             </p>
           </div>
 
           <div className="surface-subtle p-4">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Sparkles className="w-4 h-4 text-primary" />
-              Faster self-recovery on failed downloads
+              {t('whatsNew.feature2Title')}
             </div>
             <p className="text-xs text-foreground/65 mt-1">
-              Failed jobs now expose Retry, Copy Details, and dependency-specific install guide actions.
+              {t('whatsNew.feature2Desc')}
             </p>
           </div>
 
           <div className="surface-subtle p-4">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Sparkles className="w-4 h-4 text-primary" />
-              Update badge in navigation
+              {t('whatsNew.feature3Title')}
             </div>
             <p className="text-xs text-foreground/65 mt-1">
-              When a newer release exists, the Info section now shows a visible badge in the sidebar.
+              {t('whatsNew.feature3Desc')}
             </p>
           </div>
         </div>
 
         <div className="mt-6 flex justify-end">
           <button onClick={onClose} className="btn-primary px-4 py-2 rounded-lg">
-            Continue
+            {t('whatsNew.continue')}
           </button>
         </div>
       </div>

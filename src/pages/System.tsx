@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, AlertCircle, RefreshCw, Copy, ExternalLink, ShieldCheck } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 type PlatformId = 'windows' | 'macos' | 'linux';
 
@@ -18,6 +19,7 @@ interface RuntimeStatus {
 }
 
 const System: React.FC = () => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<RuntimeStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState('');
@@ -25,7 +27,7 @@ const System: React.FC = () => {
 
   const loadStatus = async () => {
     if (!window.electronAPI?.getRuntimeDependenciesStatus) {
-      setError('Runtime dependency check is unavailable in this build.');
+      setError(t('system.unavailable'));
       return;
     }
 
@@ -37,7 +39,7 @@ const System: React.FC = () => {
       if (result.success && result.data) {
         setStatus(result.data);
       } else {
-        setError('Could not load dependency status.');
+        setError(t('system.loadError'));
       }
     } catch {
       setError('Could not load dependency status.');
@@ -85,16 +87,16 @@ const System: React.FC = () => {
             <ShieldCheck className="w-3.5 h-3.5" />
             System Check
           </div>
-          <h1 className="text-2xl font-bold mt-3">Runtime Dependencies</h1>
+          <h1 className="text-2xl font-bold mt-3">{t('system.title')}</h1>
           <p className="text-foreground/60 mt-2">
-            Check whether required tools are installed and copy one-line install commands when something is missing.
+            {t('system.description')}
           </p>
         </div>
 
         <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-foreground/60">
-              Platform: <span className="text-foreground/85 font-medium">{status?.platform || 'unknown'}</span>
+              {t('system.platform')}: <span className="text-foreground/85 font-medium">{status?.platform || t('common.unknown')}</span>
             </p>
             <button
               onClick={loadStatus}
@@ -102,13 +104,13 @@ const System: React.FC = () => {
               disabled={isLoading}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-              Recheck
+              {t('system.recheck')}
             </button>
           </div>
 
           {missingRequired.length > 0 && (
             <div className="mt-3 rounded-lg border border-warning/25 bg-warning/10 p-3 text-sm text-warning">
-              Some required dependencies are missing. Downloads may fail until they are installed.
+              {t('system.missingWarning')}
             </div>
           )}
 
@@ -132,14 +134,14 @@ const System: React.FC = () => {
                       <p className="text-sm font-medium">
                         {item.name}
                         {item.required ? (
-                          <span className="text-warning"> (required)</span>
+                          <span className="text-warning"> ({t('system.required')})</span>
                         ) : (
-                          <span className="text-foreground/50"> (optional)</span>
+                          <span className="text-foreground/50"> ({t('system.optional')})</span>
                         )}
                       </p>
                     </div>
                     <p className="text-xs text-foreground/60 mt-1">
-                      {item.installed ? 'Detected and ready.' : 'Not found on PATH.'}
+                      {item.installed ? t('system.detected') : t('system.notFound')}
                     </p>
                   </div>
 
@@ -148,21 +150,21 @@ const System: React.FC = () => {
                     className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors inline-flex items-center gap-1.5"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    Guide
+                    {t('system.guide')}
                   </button>
                 </div>
 
                 {!item.installed && (
                   <>
                     <pre className="mt-3 bg-background/60 border border-foreground/10 rounded-lg p-3 text-xs whitespace-pre-wrap break-words">
-{item.installCommand}
+                      {item.installCommand}
                     </pre>
                     <button
                       onClick={() => copyCommand(item.id, item.installCommand)}
                       className="mt-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors inline-flex items-center gap-1.5"
                     >
                       <Copy className="w-3.5 h-3.5" />
-                      {copiedId === item.id ? 'Copied' : 'Copy command'}
+                      {copiedId === item.id ? t('system.copied') : t('system.copyCommand')}
                     </button>
                   </>
                 )}

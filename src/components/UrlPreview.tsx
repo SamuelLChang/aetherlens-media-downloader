@@ -2,6 +2,7 @@ import React from 'react';
 import { Loader2, Clock, Eye, User, Calendar, ExternalLink } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { VideoInfo } from '../context/DownloadContext';
+import { useTranslation } from 'react-i18next';
 
 interface UrlPreviewProps {
     videoInfo: VideoInfo | null;
@@ -39,11 +40,12 @@ const formatUploadDate = (dateStr: string): string => {
 };
 
 const UrlPreview: React.FC<UrlPreviewProps> = ({ videoInfo, isLoading, error, onDownload }) => {
+    const { t } = useTranslation();
     if (isLoading) {
         return (
             <div className="bg-card/80 backdrop-blur-sm border border-foreground/8 rounded-2xl p-6 flex items-center justify-center gap-3">
                 <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                <span className="text-foreground/70">Fetching video info...</span>
+                <span className="text-foreground/70">{t('urlPreview.fetchingInfo')}</span>
             </div>
         );
     }
@@ -95,7 +97,7 @@ const UrlPreview: React.FC<UrlPreviewProps> = ({ videoInfo, isLoading, error, on
                             {videoInfo.view_count && (
                                 <div className="flex items-center gap-1">
                                     <Eye className="w-4 h-4" />
-                                    <span>{formatViewCount(videoInfo.view_count)} views</span>
+                                    <span>{formatViewCount(videoInfo.view_count)} {t('urlPreview.views', { count: videoInfo.view_count, defaultValue: 'views' })}</span>
                                 </div>
                             )}
 
@@ -151,7 +153,7 @@ const UrlPreview: React.FC<UrlPreviewProps> = ({ videoInfo, isLoading, error, on
                                 onClick={onDownload}
                                 className="px-4 py-2 bg-primary text-black rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
                             >
-                                Download
+                                {t('urlPreview.download')}
                             </button>
                         </div>
                     </div>

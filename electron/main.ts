@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, dialog, type OpenDialogOptions } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog, Notification, type OpenDialogOptions } from 'electron'
 import path from 'node:path'
 import { spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
@@ -2545,7 +2545,45 @@ interface DownloadOptions {
   turboConnections?: number;
   outputDir?: string;
   photoTimestampMode?: 'screenshot' | 'thumbnail';
+  fileNameTemplate?: string;
 }
+
+// ==================== FILE NAME TEMPLATE ====================
+const applyFileNameTemplate = (
+  template: string | undefined,
+  vars: { title?: string; quality?: string; date?: string; uploader?: string }
+): string => {
+  if (!template || template === '{title}') {
+    // Default behavior: just use the title (or yt-dlp's %(title)s placeholder)
+    return vars.title || '%(title)s';
+  }
+
+  let result = template;
+  result = result.replace(/\{title\}/g, vars.title || '%(title)s');
+  result = result.replace(/\{quality\}/g, vars.quality || 'best');
+  result = result.replace(/\{date\}/g, vars.date || new Date().toISOString().slice(0, 10));
+  result = result.replace(/\{uploader\}/g, vars.uploader || '%(uploader)s');
+
+  // Sanitize the final result to remove any characters that are unsafe for filenames
+  return sanitizeFileComponent(result) || vars.title || '%(title)s';
+};
+
+// ==================== NOTIFICATION SYSTEM ====================
+let notificationsEnabled = true;
+
+const showDownloadNotification = (title: string, body: string) => {
+  if (!notificationsEnabled || !Notification.isSupported()) return;
+  try {
+    new Notification({ title, body }).show();
+  } catch (e) {
+    console.warn('[Notification] Failed to show notification:', e);
+  }
+};
+
+ipcMain.handle('update-notification-settings', async (_event, enabled: boolean) => {
+  notificationsEnabled = enabled;
+  return { success: true };
+});
 
 const deriveDirectDownloadExtension = (sourceUrl: string, format: DownloadOptions['format']): string => {
   const fromPath = (() => {
@@ -3090,9 +3128,13 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
   const stagingDir = getStagingDir();
   await ensureDirectory(stagingDir);
   const preferredTitle = sanitizeFileComponent(opts.titleOverride || '');
-  const outputTemplate = preferredTitle
-    ? `${downloadId}_${preferredTitle}.%(ext)s`
-    : `${downloadId}_%(title)s.%(ext)s`;
+  const templatedName = applyFileNameTemplate(opts.fileNameTemplate, {
+    title: preferredTitle || undefined,
+    quality: opts.quality || 'best',
+    date: new Date().toISOString().slice(0, 10),
+    uploader: opts.titleOverride ? undefined : undefined,
+  });
+  const outputTemplate = `${downloadId}_${templatedName}.%(ext)s`;
   const outputPath = path.join(stagingDir, outputTemplate);
 
   // Build yt-dlp arguments
@@ -3455,6 +3497,7 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
             includeImages: false,
           });
           win?.webContents.send('download-complete', { id: downloadId });
+          showDownloadNotification('Download Complete', `${opts.titleOverride || 'Your download'} has finished.`);
         } catch (moveError: any) {
           await cleanStagedArtifacts(downloadId, stagingDir);
           win?.webContents.send('download-error', {
@@ -3623,6 +3666,7 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
               includeImages: opts.preserveThumbnail !== false && !ffmpegReady,
             });
             win?.webContents.send('download-complete', { id: downloadId });
+            showDownloadNotification('Download Complete', `${opts.titleOverride || 'Your download'} has finished.`);
           } catch (moveError: any) {
             await cleanStagedArtifacts(downloadId, stagingDir);
             win?.webContents.send('download-error', {
@@ -3658,6 +3702,7 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
                 includeImages: opts.preserveThumbnail !== false && !ffmpegReady,
               });
               win?.webContents.send('download-complete', { id: downloadId });
+              showDownloadNotification('Download Complete', `${opts.titleOverride || 'Your download'} has finished.`);
             } catch (moveError: any) {
               await cleanStagedArtifacts(downloadId, stagingDir);
               win?.webContents.send('download-error', {
@@ -3731,6 +3776,7 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
           id: downloadId,
           error: classification.message,
         });
+        showDownloadNotification('Download Failed', classification.message);
       })();
     });
 

@@ -103,5 +103,9 @@ interface Window {
             success: boolean;
             error?: string;
         }>;
+        // Notification settings
+        updateNotificationSettings: (enabled: boolean) => Promise<{
+            success: boolean;
+        }>;
     };
 }

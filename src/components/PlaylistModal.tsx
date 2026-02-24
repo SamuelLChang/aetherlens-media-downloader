@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, ListVideo, Loader2, Download, Music, Clock, AlertTriangle, Check, CheckSquare, Square } from 'lucide-react';
 import { useDownloads } from '../context/DownloadContext';
 import { cn, runWithConcurrency } from '../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface PlaylistVideo {
     id: string;
@@ -54,6 +55,7 @@ const LARGE_PLAYLIST_THRESHOLD = 50;
 const CONCURRENCY_LIMIT = 4;
 
 const PlaylistModal: React.FC<PlaylistModalProps> = ({ isOpen, onClose, url }) => {
+    const { t } = useTranslation();
     const { getPlaylistInfo, addDownload, settings } = useDownloads();
     const [playlistInfo, setPlaylistInfo] = useState<PlaylistInfo | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -143,7 +145,7 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ isOpen, onClose, url }) =
                 <div className="flex items-center justify-between p-4 border-b border-foreground/8">
                     <div className="flex items-center gap-2">
                         <ListVideo className="w-5 h-5 text-primary" />
-                        <h2 className="text-lg font-semibold">Playlist Download</h2>
+                        <h2 className="text-lg font-semibold">{t('playlistModal.title')}</h2>
                     </div>
                     <button
                         onClick={onClose}
@@ -158,7 +160,7 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ isOpen, onClose, url }) =
                     {isLoading && (
                         <div className="flex flex-col items-center justify-center py-12 gap-3">
                             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                            <p className="text-foreground/50">Loading playlist...</p>
+                            <p className="text-foreground/50">{t('playlistModal.loading')}</p>
                         </div>
                     )}
 
@@ -184,7 +186,7 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ isOpen, onClose, url }) =
                                         <h3 className="font-semibold text-lg">{playlistInfo.title}</h3>
                                         <p className="text-sm text-foreground/50">{playlistInfo.uploader}</p>
                                         <p className="text-sm text-foreground/60 mt-1">
-                                            {playlistInfo.videoCount} videos
+                                            {t('playlistModal.videos', { count: playlistInfo.videoCount })}
                                         </p>
                                     </div>
                                 </div>
@@ -194,9 +196,9 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ isOpen, onClose, url }) =
                                     <div className="mt-4 p-3 bg-warning/15 border border-warning/30 rounded-lg flex items-start gap-3">
                                         <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
                                         <div>
-                                            <p className="text-sm text-yellow-400 font-medium">Large Playlist Warning</p>
+                                            <p className="text-sm text-yellow-400 font-medium">{t('playlistModal.largeWarning', 'Large Playlist Warning')}</p>
                                             <p className="text-xs text-foreground/60 mt-1">
-                                                This playlist has {playlistInfo.videoCount} videos. Downloading all may take significant time and disk space.
+                                                {t('playlistModal.largePlaylistWarn', { count: playlistInfo.videoCount })}
                                             </p>
                                         </div>
                                         <button
@@ -242,14 +244,14 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ isOpen, onClose, url }) =
                                         className="flex items-center gap-1 text-xs text-foreground/60 hover:text-foreground px-2 py-1 rounded hover:bg-white/5"
                                     >
                                         <CheckSquare className="w-3 h-3" />
-                                        Select All
+                                        {t('playlistModal.selectAll')}
                                     </button>
                                     <button
                                         onClick={deselectAll}
                                         className="flex items-center gap-1 text-xs text-foreground/60 hover:text-foreground px-2 py-1 rounded hover:bg-white/5"
                                     >
                                         <Square className="w-3 h-3" />
-                                        Deselect All
+                                        {t('playlistModal.deselectAll')}
                                     </button>
                                 </div>
                             </div>
@@ -323,7 +325,7 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ isOpen, onClose, url }) =
                         <div className="flex items-center justify-between">
                             <div>
                                 <span className="text-sm text-foreground/60">
-                                    Ready to download {selectedVideos.size} video{selectedVideos.size > 1 ? 's' : ''}
+                                    {t('playlistModal.readyDownload', { count: selectedVideos.size, defaultValue: 'Ready to download {{count}} video(s)' })}
                                 </span>
                                 {totalSize > 0 && (
                                     <span className="text-sm text-foreground/40 ml-2">
@@ -342,7 +344,7 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ isOpen, onClose, url }) =
                                     ) : (
                                         <Download className="w-4 h-4" />
                                     )}
-                                    Download Videos
+                                    {t('playlistModal.downloadVideo')}
                                 </button>
                                 <button
                                     onClick={() => handleDownload('audio')}
@@ -354,7 +356,7 @@ const PlaylistModal: React.FC<PlaylistModalProps> = ({ isOpen, onClose, url }) =
                                     ) : (
                                         <Music className="w-4 h-4" />
                                     )}
-                                    Download Audio
+                                    {t('playlistModal.downloadAudio')}
                                 </button>
                             </div>
                         </div>
