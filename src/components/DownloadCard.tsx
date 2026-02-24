@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, Check, Pause, Play, Folder, AlertCircle, Youtube, Globe, Music, RefreshCw, Zap } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { X, Check, Pause, Play, Folder, AlertCircle, Youtube, Globe, Music, RefreshCw, Zap, Copy, ExternalLink } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export interface DownloadItemData {
@@ -46,15 +46,67 @@ const getSourceLabel = (url: string) => {
     return 'Web';
 };
 
+const getTroubleshootingLink = (error?: string): string | null => {
+    if (!error) return null;
+
+    const normalized = error.toLowerCase();
+    if (normalized.includes('ffmpeg')) {
+        return 'https://ffmpeg.org/download.html';
+    }
+    if (normalized.includes('aria2')) {
+        return 'https://aria2.github.io/';
+    }
+    if (normalized.includes('yt-dlp') || normalized.includes('not found on path') || normalized.includes('command not found')) {
+        return 'https://github.com/yt-dlp/yt-dlp#installation';
+    }
+
+    return null;
+};
+
 const DownloadCard: React.FC<DownloadCardProps> = ({ item, onCancel, onPause, onResume, onBoost, onRetry, onOpenFolder }) => {
+    const [copiedDiagnostics, setCopiedDiagnostics] = useState(false);
     const isActive = item.status === 'downloading' || item.status === 'pending';
     const isPaused = item.status === 'paused';
     const isComplete = item.status === 'completed';
     const isError = item.status === 'error';
     const isRetrying = isActive && Boolean(item.eta && /retrying/i.test(item.eta));
     const isFinalizing = isActive && Boolean(item.eta && /finalizing/i.test(item.eta));
+    const troubleshootingLink = useMemo(() => getTroubleshootingLink(item.error), [item.error]);
     const canBoost = isActive && Boolean(onBoost)
         && (!item.enableTurboDownload || item.adaptiveTurboDownload || (item.turboConnections || 0) < 12);
+
+    const handleCopyDiagnostics = async () => {
+        const details = [
+            `Title: ${item.title}`,
+            `Status: ${item.status}`,
+            `URL: ${item.url}`,
+            `Format: ${item.format || 'video'}`,
+            `Quality: ${item.quality || 'default'}`,
+            `Error: ${item.error || 'Unknown error'}`,
+        ].join('\n');
+
+        try {
+            await navigator.clipboard.writeText(details);
+            setCopiedDiagnostics(true);
+            setTimeout(() => setCopiedDiagnostics(false), 1200);
+        } catch {
+            setCopiedDiagnostics(false);
+        }
+    };
+
+    const handleOpenGuide = async () => {
+        if (!troubleshootingLink) return;
+
+        if (window.electronAPI?.openExternalUrl) {
+            const result = await window.electronAPI.openExternalUrl(troubleshootingLink);
+            if (!result.success) {
+                window.open(troubleshootingLink, '_blank', 'noopener,noreferrer');
+            }
+            return;
+        }
+
+        window.open(troubleshootingLink, '_blank', 'noopener,noreferrer');
+    };
 
     return (
         <div
@@ -204,6 +256,41 @@ const DownloadCard: React.FC<DownloadCardProps> = ({ item, onCancel, onPause, on
                             )}
                         </div>
                     </div>
+
+                    {isError && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                            {onRetry && (
+                                <button
+                                    onClick={() => onRetry(item.id)}
+                                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-success/15 hover:bg-success/25 text-success"
+                                    title="Retry this download"
+                                >
+                                    <RefreshCw className="w-3 h-3" />
+                                    Retry
+                                </button>
+                            )}
+
+                            <button
+                                onClick={() => void handleCopyDiagnostics()}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-white/6 hover:bg-white/10 text-foreground/75"
+                                title="Copy download diagnostics"
+                            >
+                                <Copy className="w-3 h-3" />
+                                {copiedDiagnostics ? 'Copied' : 'Copy Details'}
+                            </button>
+
+                            {troubleshootingLink && (
+                                <button
+                                    onClick={() => void handleOpenGuide()}
+                                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs bg-primary/15 hover:bg-primary/25 text-primary"
+                                    title="Open dependency install guide"
+                                >
+                                    <ExternalLink className="w-3 h-3" />
+                                    Install Guide
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -5,6 +5,7 @@ import { cn } from '../lib/utils';
 interface SidebarProps {
     currentPage: string;
     onNavigate: (page: string) => void;
+    showInfoBadge?: boolean;
 }
 
 interface NavItem {
@@ -27,7 +28,8 @@ const NavButton: React.FC<{
     item: NavItem;
     currentPage: string;
     onNavigate: (page: string) => void;
-}> = ({ item, currentPage, onNavigate }) => {
+    showBadge?: boolean;
+}> = ({ item, currentPage, onNavigate, showBadge = false }) => {
     const isActive = currentPage === item.id;
 
     return (
@@ -56,11 +58,18 @@ const NavButton: React.FC<{
             )}>
                 {item.icon}
             </span>
+
+            {showBadge && (
+                <span
+                    className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-warning shadow-[0_0_0_3px_rgba(245,158,11,0.18)]"
+                    aria-hidden="true"
+                />
+            )}
         </button>
     );
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, showInfoBadge = false }) => {
     return (
         <aside
             className="h-full w-16 bg-secondary/40 border-r border-foreground/5 flex flex-col backdrop-blur-md"
@@ -82,6 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
                     item={infoNavItem}
                     currentPage={currentPage}
                     onNavigate={onNavigate}
+                    showBadge={showInfoBadge}
                 />
             </div>
         </aside>

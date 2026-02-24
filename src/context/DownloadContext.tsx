@@ -15,6 +15,7 @@ export interface DownloadItem {
     enableTurboDownload?: boolean;
     adaptiveTurboDownload?: boolean;
     turboConnections?: number;
+    photoTimestampMode?: 'screenshot' | 'thumbnail';
     error?: string;
     completedAt?: string;
 }
@@ -28,6 +29,7 @@ export interface PerDownloadTurboOptions {
 export interface AddDownloadOptions {
     outputDir?: string;
     turboOverride?: PerDownloadTurboOptions;
+    photoTimestampMode?: 'screenshot' | 'thumbnail';
 }
 
 export interface HistoryItem {
@@ -134,8 +136,9 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const downloadsSaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const historySaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const settingsSaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-    const progressQueue = React.useRef<Map<string, { progress: number; speed?: string; eta?: string }>>(new Map());
+    const progressQueue = React.useRef<Map<string, { progress: number; speed?: string; eta?: string; queuedAt: number }>>(new Map());
     const progressRaf = React.useRef<number | null>(null);
+    const pendingTerminalState = React.useRef<Map<string, { status: 'completed' | 'error'; error?: string }>>(new Map());
     const videoInfoCache = React.useRef<Map<string, { data: VideoInfo; timestamp: number }>>(new Map());
     const videoInfoInflight = React.useRef<Map<string, Promise<{ success: boolean; data?: VideoInfo; error?: string }>>>(new Map());
 
@@ -252,9 +255,13 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (!window.ipcRenderer) return;
 
         const flushProgress = () => {
+            const consumedIds = new Set<string>();
+            const now = Date.now();
+
             setDownloads(prev => prev.map(d => {
                 const update = progressQueue.current.get(d.id);
                 if (!update) return d;
+                consumedIds.add(d.id);
 
                 // Ignore late progress packets after completion to prevent
                 // accidental UI regression back to "downloading".
@@ -262,14 +269,27 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     return d;
                 }
 
-                return { ...d, ...update, status: 'downloading' };
+                return { ...d, progress: update.progress, speed: update.speed, eta: update.eta, status: 'downloading' };
             }));
-            progressQueue.current.clear();
-            progressRaf.current = null;
+
+            consumedIds.forEach((id) => progressQueue.current.delete(id));
+
+            // Drop stale unmatched packets after 30s to avoid unbounded growth.
+            for (const [id, update] of progressQueue.current.entries()) {
+                if (now - update.queuedAt > 30000) {
+                    progressQueue.current.delete(id);
+                }
+            }
+
+            if (progressQueue.current.size > 0) {
+                progressRaf.current = requestAnimationFrame(flushProgress);
+            } else {
+                progressRaf.current = null;
+            }
         };
 
         const handleProgress = (_event: any, { id, progress, speed, eta }: { id: string; progress: number; speed?: string; eta?: string }) => {
-            progressQueue.current.set(id, { progress, speed, eta });
+            progressQueue.current.set(id, { progress, speed, eta, queuedAt: Date.now() });
             if (!progressRaf.current) {
                 progressRaf.current = requestAnimationFrame(flushProgress);
             }
@@ -277,8 +297,10 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         const handleComplete = (_event: any, { id }: { id: string }) => {
             setDownloads(prev => {
+                let matched = false;
                 const updatedDownloads = prev.map(d => {
                     if (d.id === id) {
+                        matched = true;
                         const completedItem = {
                             ...d,
                             status: 'completed' as const,
@@ -292,15 +314,31 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     }
                     return d;
                 });
+
+                if (!matched) {
+                    pendingTerminalState.current.set(id, { status: 'completed' });
+                }
+
                 return updatedDownloads;
             });
         };
 
         const handleError = (_event: any, { id, error }: { id: string; error: string }) => {
             console.error("Download error:", error);
-            setDownloads(prev => prev.map(d =>
-                d.id === id ? { ...d, status: 'error', error } : d
-            ));
+            setDownloads(prev => {
+                let matched = false;
+                const updated = prev.map(d => {
+                    if (d.id !== id) return d;
+                    matched = true;
+                    return { ...d, status: 'error' as const, error };
+                });
+
+                if (!matched) {
+                    pendingTerminalState.current.set(id, { status: 'error', error });
+                }
+
+                return updated;
+            });
         };
 
         window.ipcRenderer.on('download-progress', handleProgress);
@@ -369,6 +407,7 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         quality?: string,
         outputDirOrOptions?: string | AddDownloadOptions
     ) => {
+        let seededDownloadId: string | undefined;
         try {
             const parsedOptions: AddDownloadOptions = typeof outputDirOrOptions === 'string'
                 ? { outputDir: outputDirOrOptions }
@@ -386,10 +425,12 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             const targetUrl = url;
 
             const downloadOptions = {
+                id: Math.random().toString(36).substr(2, 9),
                 url: targetUrl,
                 titleOverride: info?.title,
                 format,
                 quality,
+                photoTimestampMode: parsedOptions.photoTimestampMode,
                 cookiesFromBrowser: settings.cookiesFromBrowser,
                 embedSubtitles: settings.embedSubtitles,
                 subtitleLanguages: settings.subtitleLanguages,
@@ -402,6 +443,41 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 turboConnections,
                 outputDir: parsedOptions.outputDir,
             };
+            seededDownloadId = downloadOptions.id;
+
+            const seededItem: DownloadItem = {
+                id: downloadOptions.id,
+                url,
+                title: info?.title || 'Preparing download...',
+                thumbnail: info?.thumbnail,
+                progress: 0,
+                status: 'pending',
+                format,
+                quality,
+                outputDir: parsedOptions.outputDir,
+                enableTurboDownload: turboEnabled,
+                adaptiveTurboDownload: adaptiveTurbo,
+                turboConnections,
+                photoTimestampMode: parsedOptions.photoTimestampMode,
+            };
+
+            setDownloads(prev => {
+                const pending = pendingTerminalState.current.get(seededItem.id);
+                if (!pending) {
+                    return [seededItem, ...prev];
+                }
+
+                pendingTerminalState.current.delete(seededItem.id);
+                const resolved = pending.status === 'completed'
+                    ? { ...seededItem, status: 'completed' as const, progress: 100 }
+                    : { ...seededItem, status: 'error' as const, error: pending.error };
+
+                if (pending.status === 'completed') {
+                    addToHistory(resolved);
+                }
+
+                return [resolved, ...prev];
+            });
 
             let result;
             if (window.electronAPI?.startDownload) {
@@ -410,9 +486,8 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 result = await window.ipcRenderer.invoke('start-download', downloadOptions);
             } else {
                 console.warn('IPC not available, mocking download');
-                const id = Math.random().toString(36).substr(2, 9);
                 const newItem: DownloadItem = {
-                    id,
+                    id: downloadOptions.id,
                     url,
                     title: info?.title || 'Mock Download',
                     thumbnail: info?.thumbnail,
@@ -424,8 +499,9 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     enableTurboDownload: turboEnabled,
                     adaptiveTurboDownload: adaptiveTurbo,
                     turboConnections,
+                    photoTimestampMode: parsedOptions.photoTimestampMode,
                 };
-                setDownloads(prev => [newItem, ...prev]);
+                setDownloads(prev => prev.map(d => d.id === downloadOptions.id ? newItem : d));
 
                 let progress = 0;
                 const interval = setInterval(() => {
@@ -433,7 +509,7 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     if (progress >= 100) {
                         clearInterval(interval);
                         setDownloads(prev => prev.map(d => {
-                            if (d.id === id) {
+                            if (d.id === downloadOptions.id) {
                                 const completed = { ...d, status: 'completed' as const, progress: 100 };
                                 addToHistory(completed);
                                 return completed;
@@ -442,30 +518,25 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                         }));
                     } else {
                         setDownloads(prev => prev.map(d =>
-                            d.id === id ? { ...d, status: 'downloading', progress, speed: '1.5 MB/s', eta: '00:15' } : d
+                            d.id === downloadOptions.id ? { ...d, status: 'downloading', progress, speed: '1.5 MB/s', eta: '00:15' } : d
                         ));
                     }
                 }, 500);
                 return;
             }
 
-            const newItem: DownloadItem = {
-                id: result.id,
-                url,
-                title: info?.title || 'Downloading...',
-                thumbnail: info?.thumbnail,
-                progress: 0,
-                status: 'pending',
-                format,
-                quality,
-                outputDir: parsedOptions.outputDir,
-                enableTurboDownload: turboEnabled,
-                adaptiveTurboDownload: adaptiveTurbo,
-                turboConnections,
-            };
-            setDownloads(prev => [newItem, ...prev]);
+            if (result?.id && result.id !== downloadOptions.id) {
+                setDownloads(prev => prev.map(d => d.id === downloadOptions.id ? { ...d, id: result.id } : d));
+            }
         } catch (e) {
             console.error('Failed to start download', e);
+            if (!seededDownloadId) return;
+            const message = e instanceof Error ? e.message : 'Failed to start download';
+            setDownloads(prev => prev.map(d =>
+                d.id === seededDownloadId
+                    ? { ...d, status: 'error', error: message }
+                    : d
+            ));
         }
     }, [getVideoInfo, addToHistory, settings]);
 
@@ -568,6 +639,7 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     enableTurboDownload: download.enableTurboDownload ?? settings.enableTurboDownload,
                     adaptiveTurboDownload: download.adaptiveTurboDownload ?? settings.adaptiveTurboDownload,
                     turboConnections: download.turboConnections ?? settings.turboConnections,
+                    photoTimestampMode: download.photoTimestampMode,
                     outputDir: download.outputDir,
                 };
 
@@ -658,6 +730,7 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             enableTurboDownload: true,
             adaptiveTurboDownload: false,
             turboConnections: boostedConnections,
+            photoTimestampMode: download.photoTimestampMode,
             outputDir: download.outputDir,
         };
 
@@ -711,7 +784,8 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 enabled: download.enableTurboDownload ?? settings.enableTurboDownload,
                 adaptive: download.adaptiveTurboDownload ?? settings.adaptiveTurboDownload,
                 connections: download.turboConnections ?? settings.turboConnections,
-            }
+            },
+            photoTimestampMode: download.photoTimestampMode,
         });
     }, [downloads, resumeDownload, removeDownload, addDownload, settings]);
 

@@ -10,7 +10,8 @@ interface FormatSelectorProps {
         format: 'video' | 'audio' | 'photo',
         quality?: string,
         outputDir?: string,
-        turboOverride?: { enabled: boolean; adaptive?: boolean; connections?: number }
+        turboOverride?: { enabled: boolean; adaptive?: boolean; connections?: number },
+        photoTimestampMode?: 'screenshot' | 'thumbnail'
     ) => void;
     availableQualities?: number[];
     qualitySizes?: Record<string, number>;
@@ -18,6 +19,7 @@ interface FormatSelectorProps {
     defaultTurboEnabled?: boolean;
     defaultAdaptiveTurbo?: boolean;
     defaultTurboConnections?: number;
+    hasTimestampInUrl?: boolean;
 }
 
 // Get quality label based on resolution
@@ -42,6 +44,7 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({
     defaultTurboEnabled = true,
     defaultAdaptiveTurbo = true,
     defaultTurboConnections = 8,
+    hasTimestampInUrl = false,
 }) => {
     const [selectedFormat, setSelectedFormat] = React.useState<'video' | 'audio' | 'photo'>('video');
     const [selectedQuality, setSelectedQuality] = React.useState<string>('');
@@ -50,6 +53,7 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({
     const [turboEnabled, setTurboEnabled] = React.useState<boolean>(defaultTurboEnabled);
     const [adaptiveTurbo, setAdaptiveTurbo] = React.useState<boolean>(defaultAdaptiveTurbo);
     const [turboConnections, setTurboConnections] = React.useState<number>(defaultTurboConnections);
+    const [photoTimestampMode, setPhotoTimestampMode] = React.useState<'screenshot' | 'thumbnail'>('screenshot');
 
     // Keep quality array stable across rerenders so selection does not reset while user clicks.
     const sortedQualities = React.useMemo(() => [...availableQualities].sort((a, b) => b - a), [availableQualities]);
@@ -82,6 +86,7 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({
             setTurboEnabled(defaultTurboEnabled);
             setAdaptiveTurbo(defaultAdaptiveTurbo);
             setTurboConnections(defaultTurboConnections);
+            setPhotoTimestampMode('screenshot');
         }
     }, [isOpen, sortedQualities, defaultQuality, defaultTurboEnabled, defaultAdaptiveTurbo, defaultTurboConnections]);
 
@@ -94,7 +99,8 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({
                 enabled: turboEnabled,
                 adaptive: adaptiveTurbo,
                 connections: turboConnections,
-            }
+            },
+            selectedFormat === 'photo' ? photoTimestampMode : undefined
         );
     };
 
@@ -387,9 +393,41 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({
                                         <div>
                                             <h3 className="text-foreground font-medium mb-1">High Quality Photo</h3>
                                             <p className="text-xs text-foreground/60">
-                                                Download the highest resolution image or thumbnail available.
+                                                Download the best thumbnail, or capture a screenshot when the URL includes a time (for example `?t=109`).
                                             </p>
                                         </div>
+
+                                        {hasTimestampInUrl && (
+                                            <div className="w-full mt-2 rounded-xl border border-warning/25 bg-warning/5 p-3">
+                                                <p className="text-[11px] uppercase tracking-wide text-foreground/60 mb-2">Timestamp Link Detected</p>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPhotoTimestampMode('screenshot')}
+                                                        className={cn(
+                                                            'px-2.5 py-2 rounded-lg text-xs border transition-colors',
+                                                            photoTimestampMode === 'screenshot'
+                                                                ? 'bg-warning/25 border-warning text-foreground'
+                                                                : 'bg-secondary/40 border-foreground/10 text-foreground/65 hover:bg-secondary/60'
+                                                        )}
+                                                    >
+                                                        Screenshot At Time
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPhotoTimestampMode('thumbnail')}
+                                                        className={cn(
+                                                            'px-2.5 py-2 rounded-lg text-xs border transition-colors',
+                                                            photoTimestampMode === 'thumbnail'
+                                                                ? 'bg-warning/25 border-warning text-foreground'
+                                                                : 'bg-secondary/40 border-foreground/10 text-foreground/65 hover:bg-secondary/60'
+                                                        )}
+                                                    >
+                                                        Thumbnail Only
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -413,7 +451,7 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({
                                 Download {selectedFormat === 'audio'
                                     ? 'Audio'
                                     : selectedFormat === 'photo'
-                                        ? 'Photo'
+                                        ? (hasTimestampInUrl && photoTimestampMode === 'screenshot' ? 'Screenshot' : 'Photo')
                                         : selectedQualityInfo
                                             ? `${selectedQualityInfo.label} (${selectedQualityInfo.sublabel})`
                                             : 'Video'

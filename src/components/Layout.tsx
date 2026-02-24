@@ -9,10 +9,12 @@ import Info from '../pages/Info';
 import System from '../pages/System';
 import AetherLensLogo from './AetherLensLogo';
 import SetupWizard from './SetupWizard';
+import WhatsNewModal from './WhatsNewModal';
 
 // Window types are defined in vite-env.d.ts
 
 const SETUP_COMPLETE_STORAGE_KEY = 'aetherlens-setup-complete-v1';
+const WHATS_NEW_SEEN_VERSION_STORAGE_KEY = 'aetherlens-whats-new-seen-version';
 
 type Page = 'home' | 'downloads' | 'history' | 'system' | 'settings' | 'info';
 
@@ -32,6 +34,9 @@ const isPage = (value: string): value is Page => {
 const Layout: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<Page>('home');
     const [showSetupWizard, setShowSetupWizard] = useState(false);
+    const [hasAvailableUpdate, setHasAvailableUpdate] = useState(false);
+    const [showWhatsNew, setShowWhatsNew] = useState(false);
+    const [appVersion, setAppVersion] = useState('');
 
     const handleNavigate = (page: string) => {
         if (isPage(page)) {
@@ -46,9 +51,71 @@ const Layout: React.FC = () => {
         }
     }, []);
 
+    useEffect(() => {
+        let cancelled = false;
+
+        const detectUpdate = async () => {
+            if (!window.electronAPI?.checkForUpdates) return;
+
+            try {
+                const result = await window.electronAPI.checkForUpdates();
+                if (!cancelled && result.success && result.data) {
+                    setHasAvailableUpdate(Boolean(result.data.updateAvailable));
+                }
+            } catch {
+                if (!cancelled) {
+                    setHasAvailableUpdate(false);
+                }
+            }
+        };
+
+        detectUpdate();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const prepareWhatsNew = async () => {
+            if (!window.electronAPI?.getAppInfo) return;
+
+            try {
+                const result = await window.electronAPI.getAppInfo();
+                const currentVersion = result?.success ? result.data?.version || '' : '';
+                if (!currentVersion || cancelled) return;
+
+                setAppVersion(currentVersion);
+                const seenVersion = localStorage.getItem(WHATS_NEW_SEEN_VERSION_STORAGE_KEY);
+                if (seenVersion !== currentVersion) {
+                    setShowWhatsNew(true);
+                }
+            } catch {
+                if (!cancelled) {
+                    setShowWhatsNew(false);
+                }
+            }
+        };
+
+        prepareWhatsNew();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     const handleSetupClose = () => {
         localStorage.setItem(SETUP_COMPLETE_STORAGE_KEY, 'true');
         setShowSetupWizard(false);
+    };
+
+    const handleWhatsNewClose = () => {
+        if (appVersion) {
+            localStorage.setItem(WHATS_NEW_SEEN_VERSION_STORAGE_KEY, appVersion);
+        }
+        setShowWhatsNew(false);
     };
 
     const handleMinimize = () => {
@@ -120,6 +187,7 @@ const Layout: React.FC = () => {
                 <Sidebar
                     currentPage={currentPage}
                     onNavigate={handleNavigate}
+                    showInfoBadge={hasAvailableUpdate}
                 />
                 <main className="flex-1 overflow-auto relative bg-background/60 border-l border-foreground/5">
                     {pageMap[currentPage]}
@@ -127,6 +195,11 @@ const Layout: React.FC = () => {
             </div>
 
             <SetupWizard isOpen={showSetupWizard} onClose={handleSetupClose} />
+            <WhatsNewModal
+                isOpen={showWhatsNew && !showSetupWizard}
+                version={appVersion}
+                onClose={handleWhatsNewClose}
+            />
         </div>
     );
 };

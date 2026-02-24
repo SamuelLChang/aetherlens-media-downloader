@@ -381,6 +381,406 @@ const deriveTitleFromUrl = (targetUrl: string): string | undefined => {
   }
 };
 
+const parseTimestampTokenToSeconds = (token: string): number | undefined => {
+  if (!token) return undefined;
+  const value = token.trim().toLowerCase();
+  if (!value) return undefined;
+
+  // Supports plain seconds ("109") and YouTube-style compact durations ("1h2m3s").
+  if (/^\d+(?:\.\d+)?$/.test(value)) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+  }
+
+  let total = 0;
+  let consumed = 0;
+  const matcher = /(\d+(?:\.\d+)?)(h|m|s)/g;
+  let match: RegExpExecArray | null;
+  while ((match = matcher.exec(value)) !== null) {
+    const amount = Number(match[1]);
+    if (!Number.isFinite(amount)) continue;
+
+    if (match[2] === 'h') total += amount * 3600;
+    if (match[2] === 'm') total += amount * 60;
+    if (match[2] === 's') total += amount;
+    consumed += match[0].length;
+  }
+
+  if (consumed > 0 && consumed === value.length && total >= 0) {
+    return total;
+  }
+
+  return undefined;
+};
+
+const extractTimestampFromVideoUrl = (targetUrl: string): { seconds: number; cleanUrl: string } | null => {
+  try {
+    const parsed = new URL(targetUrl);
+
+    const tryParams = ['t', 'start', 'time_continue'];
+    let seconds: number | undefined;
+    for (const key of tryParams) {
+      const raw = parsed.searchParams.get(key);
+      if (!raw) continue;
+      const parsedSeconds = parseTimestampTokenToSeconds(raw);
+      if (parsedSeconds !== undefined) {
+        seconds = parsedSeconds;
+        break;
+      }
+    }
+
+    if (seconds === undefined && parsed.hash) {
+      const hash = parsed.hash.replace(/^#/, '');
+      const hashParams = new URLSearchParams(hash);
+      const hashT = hashParams.get('t') || hashParams.get('start');
+      if (hashT) {
+        seconds = parseTimestampTokenToSeconds(hashT);
+      } else {
+        seconds = parseTimestampTokenToSeconds(hash);
+      }
+    }
+
+    if (seconds === undefined || !Number.isFinite(seconds) || seconds < 0) {
+      return null;
+    }
+
+    const cleanUrl = new URL(parsed.toString());
+    cleanUrl.searchParams.delete('t');
+    cleanUrl.searchParams.delete('start');
+    cleanUrl.searchParams.delete('time_continue');
+    cleanUrl.hash = '';
+
+    return {
+      seconds,
+      cleanUrl: cleanUrl.toString(),
+    };
+  } catch {
+    return null;
+  }
+};
+
+const formatTimestampForFilename = (seconds: number): string => {
+  const totalSeconds = Math.max(0, Math.floor(seconds));
+  const hrs = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+
+  const parts: string[] = [];
+  if (hrs > 0) parts.push(`${hrs}h`);
+  if (mins > 0 || hrs > 0) parts.push(`${mins}m`);
+  parts.push(`${secs}s`);
+  return parts.join('');
+};
+
+const extractYouTubeVideoId = (targetUrl: string): string | undefined => {
+  try {
+    const parsed = new URL(targetUrl);
+    const host = parsed.hostname.toLowerCase();
+
+    if (host === 'youtu.be') {
+      const id = parsed.pathname.replace(/^\//, '').trim();
+      return id || undefined;
+    }
+
+    if (host.includes('youtube.com')) {
+      const v = parsed.searchParams.get('v');
+      if (v) return v;
+
+      const pathParts = parsed.pathname.split('/').filter(Boolean);
+      const embedIndex = pathParts.findIndex((part) => part === 'embed' || part === 'shorts');
+      if (embedIndex !== -1 && pathParts[embedIndex + 1]) {
+        return pathParts[embedIndex + 1];
+      }
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
+};
+
+const captureYouTubeScreenshotAtTimestamp = async (params: {
+  videoId: string;
+  seconds: number;
+  outputPath: string;
+  downloadId: string;
+  referer: string;
+  onWindowCreated?: (window: BrowserWindow) => void;
+}): Promise<boolean> => {
+  const { videoId, seconds, outputPath, downloadId, referer, onWindowCreated } = params;
+
+  return new Promise((resolve) => {
+    const captureWindow = new BrowserWindow({
+      width: 1280,
+      height: 720,
+      show: false,
+      backgroundColor: '#000000',
+      webPreferences: {
+        sandbox: true,
+        nodeIntegration: false,
+        contextIsolation: true,
+      },
+    });
+
+    onWindowCreated?.(captureWindow);
+
+    let settled = false;
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      try {
+        if (!captureWindow.isDestroyed()) {
+          captureWindow.destroy();
+        }
+      } catch {
+        // Ignore cleanup errors.
+      }
+      resolve(ok);
+    };
+
+    const timeout = setTimeout(() => {
+      finish(false);
+    }, 45000);
+
+    captureWindow.on('closed', () => {
+      finish(false);
+    });
+
+    captureWindow.webContents.on('did-fail-load', () => {
+      finish(false);
+    });
+
+    captureWindow.webContents.on('did-finish-load', () => {
+      void (async () => {
+        try {
+          win?.webContents.send('download-progress', {
+            id: downloadId,
+            progress: 35,
+            eta: 'seeking in player',
+          });
+
+          const seekResult = await captureWindow.webContents.executeJavaScript(`
+            (async () => {
+              const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+              const target = ${Number(seconds.toFixed(3))};
+              const waitFor = async (predicate, timeoutMs, stepMs = 120) => {
+                const deadline = Date.now() + timeoutMs;
+                while (Date.now() < deadline) {
+                  if (predicate()) return true;
+                  await wait(stepMs);
+                }
+                return predicate();
+              };
+              const isVisible = (el) => {
+                if (!el) return false;
+                const style = window.getComputedStyle(el);
+                if (!style) return false;
+                if (style.display === 'none' || style.visibility === 'hidden') return false;
+                if (parseFloat(style.opacity || '1') < 0.05) return false;
+                const rect = el.getBoundingClientRect();
+                return rect.width > 1 && rect.height > 1;
+              };
+
+              let attempts = 0;
+              let video = null;
+              while (!video && attempts < 120) {
+                video = document.querySelector('video');
+                if (!video) {
+                  await wait(250);
+                  attempts += 1;
+                }
+              }
+
+              if (!video) return { ok: false, reason: 'no-video-element' };
+
+              // Ensure metadata exists before seeking.
+              const gotMetadata = await waitFor(
+                () => Number.isFinite(video.duration) && video.duration > 0,
+                8000,
+                100
+              );
+              if (!gotMetadata) return { ok: false, reason: 'metadata-timeout' };
+
+              const maxSeek = Math.max(0, video.duration - 0.25);
+              const seekTarget = Math.min(Math.max(0, target), maxSeek);
+
+              video.muted = true;
+              try {
+                await video.play();
+              } catch {
+                // Autoplay can fail in some environments; seek can still work without active playback.
+              }
+
+              const waitRenderedFrame = async () => {
+                if (typeof video.requestVideoFrameCallback === 'function') {
+                  await new Promise((resolve) => {
+                    let settled = false;
+                    const done = () => {
+                      if (settled) return;
+                      settled = true;
+                      resolve(undefined);
+                    };
+
+                    video.requestVideoFrameCallback(() => done());
+                    setTimeout(done, 900);
+                  });
+                  return;
+                }
+
+                await wait(240);
+              };
+
+              let seekOk = false;
+              for (let attempt = 0; attempt < 4; attempt += 1) {
+                try {
+                  video.currentTime = seekTarget;
+                } catch {
+                  return { ok: false, reason: 'seek-failed' };
+                }
+
+                await new Promise((resolve) => {
+                  let done = false;
+                  const complete = () => {
+                    if (done) return;
+                    done = true;
+                    video.removeEventListener('seeked', complete);
+                    resolve(undefined);
+                  };
+
+                  video.addEventListener('seeked', complete, { once: true });
+                  setTimeout(complete, 3500);
+                });
+
+                const closeEnough = await waitFor(
+                  () => Math.abs((video.currentTime || 0) - seekTarget) <= 0.65 && video.readyState >= 2,
+                  2200,
+                  120
+                );
+
+                await waitRenderedFrame();
+
+                if (closeEnough) {
+                  seekOk = true;
+                  break;
+                }
+
+                // If first decode lands at 0 on slow links, nudge playback then retry seek.
+                await wait(220);
+                try {
+                  await video.play();
+                } catch {
+                  // Ignore and keep retrying seek.
+                }
+              }
+
+              if (!seekOk) {
+                return { ok: false, reason: 'seek-not-accurate', currentTime: video.currentTime || 0, target: seekTarget };
+              }
+
+              // Hide transient YouTube chrome so capture focuses on the video frame.
+              const hideSelectors = [
+                '.ytp-chrome-top',
+                '.ytp-chrome-bottom',
+                '.ytp-gradient-top',
+                '.ytp-gradient-bottom',
+                '.ytp-title',
+                '.ytp-title-text',
+                '.ytp-title-channel',
+                '.ytp-watch-later-button',
+                '.ytp-share-button',
+                '.ytp-ce-element',
+                '.ytp-show-cards-title',
+                '.ytp-pause-overlay',
+                '.ytp-watermark',
+                '.ytp-large-play-button',
+                '.ytp-spinner',
+                '.ytp-cued-thumbnail-overlay',
+                '.ytp-impression-link',
+              ];
+
+              for (const selector of hideSelectors) {
+                for (const el of document.querySelectorAll(selector)) {
+                  el.style.opacity = '0';
+                  el.style.visibility = 'hidden';
+                  el.style.pointerEvents = 'none';
+                }
+              }
+
+              await waitFor(() => {
+                return !hideSelectors.some((selector) =>
+                  Array.from(document.querySelectorAll(selector)).some((el) => isVisible(el))
+                );
+              }, 4000, 120);
+
+              await waitRenderedFrame();
+              await wait(240);
+
+              video.pause();
+
+              const rect = video.getBoundingClientRect();
+              return {
+                ok: true,
+                currentTime: video.currentTime || 0,
+                videoRect: {
+                  x: Math.max(0, Math.floor(rect.x)),
+                  y: Math.max(0, Math.floor(rect.y)),
+                  width: Math.max(0, Math.floor(rect.width)),
+                  height: Math.max(0, Math.floor(rect.height)),
+                },
+                viewport: {
+                  width: Math.max(0, Math.floor(window.innerWidth)),
+                  height: Math.max(0, Math.floor(window.innerHeight)),
+                },
+              };
+            })();
+          `, true);
+
+          if (!seekResult?.ok) {
+            finish(false);
+            return;
+          }
+
+          win?.webContents.send('download-progress', {
+            id: downloadId,
+            progress: 70,
+            eta: 'rendering frame',
+          });
+
+          const rect = seekResult?.videoRect;
+          const viewport = seekResult?.viewport;
+          const hasRect = rect && rect.width > 10 && rect.height > 10 && viewport && viewport.width > 0 && viewport.height > 0;
+
+          const captureRect = hasRect
+            ? {
+              x: Math.max(0, Math.min(rect.x, viewport.width - 1)),
+              y: Math.max(0, Math.min(rect.y, viewport.height - 1)),
+              width: Math.max(1, Math.min(rect.width, viewport.width - Math.max(0, rect.x))),
+              height: Math.max(1, Math.min(rect.height, viewport.height - Math.max(0, rect.y))),
+            }
+            : undefined;
+
+          const image = captureRect
+            ? await captureWindow.webContents.capturePage(captureRect)
+            : await captureWindow.webContents.capturePage();
+          await fsPromises.writeFile(outputPath, image.toJPEG(92));
+
+          finish(true);
+        } catch {
+          finish(false);
+        }
+      })();
+    });
+
+    const embedStart = Math.max(0, Math.floor(seconds));
+    const embedUrl = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=0&fs=0&disablekb=1&start=${embedStart}`;
+    void captureWindow.loadURL(embedUrl, {
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      httpReferrer: referer,
+    });
+  });
+};
+
 const shouldUseGenericHtmlFallback = (targetUrl: string): boolean => {
   try {
     const host = new URL(targetUrl).hostname.toLowerCase();
@@ -2067,6 +2467,7 @@ const downloadFile = async (
         const totalBytes = parseInt(lenStr || '0');
         console.log('[Direct Download] Content-Length:', totalBytes);
         let receivedBytes = 0;
+        let unknownLengthProgress = 8;
         const fileStream = fs.createWriteStream(outputPath);
         activeFileStream = fileStream;
 
@@ -2081,6 +2482,13 @@ const downloadFile = async (
               id: downloadId,
               progress: Math.round(progress * 10) / 10,
               speed: 'High Speed' // Simple placeholder
+            });
+          } else {
+            unknownLengthProgress = Math.min(95, unknownLengthProgress + 6);
+            win?.webContents.send('download-progress', {
+              id: downloadId,
+              progress: unknownLengthProgress,
+              speed: 'High Speed'
             });
           }
         });
@@ -2136,6 +2544,7 @@ interface DownloadOptions {
   adaptiveTurboDownload?: boolean;
   turboConnections?: number;
   outputDir?: string;
+  photoTimestampMode?: 'screenshot' | 'thumbnail';
 }
 
 const deriveDirectDownloadExtension = (sourceUrl: string, format: DownloadOptions['format']): string => {
@@ -2209,10 +2618,289 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
 
   // ==================== PHOTO DOWNLOAD HANDLER ====================
   if (opts.format === 'photo') {
+    const timestampRequest = extractTimestampFromVideoUrl(opts.url);
+    const wantsTimestampScreenshot = Boolean(timestampRequest) && opts.photoTimestampMode !== 'thumbnail';
+
+    if (wantsTimestampScreenshot && timestampRequest) {
+      console.log('[Photo Download] Timestamp detected, capturing frame at:', timestampRequest.seconds);
+      win?.webContents.send('download-progress', {
+        id: downloadId,
+        progress: 2,
+        eta: 'preparing screenshot',
+      });
+
+      return new Promise(async (resolve) => {
+        const baseTitle = sanitizeFileComponent(opts.titleOverride || deriveTitleFromUrl(timestampRequest.cleanUrl) || `screenshot_${Date.now()}`);
+        const outputName = `${baseTitle}_at_${formatTimestampForFilename(timestampRequest.seconds)}.jpg`;
+        const finalImagePath = await uniqueDestinationPath(downloadsPath, outputName);
+
+        // Primary method for YouTube-like links: render + seek in hidden player and capture frame.
+        const youtubeVideoId = extractYouTubeVideoId(timestampRequest.cleanUrl);
+        if (youtubeVideoId) {
+          win?.webContents.send('download-progress', {
+            id: downloadId,
+            progress: 10,
+            eta: 'loading hidden player',
+          });
+
+          let browserCaptureWindow: BrowserWindow | null = null;
+          activeDownloads.set(downloadId, {
+            process: {
+              kill: () => {
+                try {
+                  browserCaptureWindow?.destroy();
+                } catch {
+                  // Ignore browser capture termination errors.
+                }
+              },
+              abort: () => {
+                try {
+                  browserCaptureWindow?.destroy();
+                } catch {
+                  // Ignore browser capture termination errors.
+                }
+              },
+            },
+            options: opts,
+            progress: 10,
+          });
+
+          const browserCaptureSuccess = await captureYouTubeScreenshotAtTimestamp({
+            videoId: youtubeVideoId,
+            seconds: timestampRequest.seconds,
+            outputPath: finalImagePath,
+            downloadId,
+            referer: opts.referer || timestampRequest.cleanUrl,
+            onWindowCreated: (window) => {
+              browserCaptureWindow = window;
+            },
+          });
+
+          if (intentionallyCanceledIds.has(downloadId)) {
+            intentionallyCanceledIds.delete(downloadId);
+            activeDownloads.delete(downloadId);
+            resolve({ id: downloadId, status: 'canceled' });
+            return;
+          }
+
+          if (intentionallyPausedIds.has(downloadId)) {
+            intentionallyPausedIds.delete(downloadId);
+            pausedDownloads.set(downloadId, opts);
+            activeDownloads.delete(downloadId);
+            resolve({ id: downloadId, status: 'paused' });
+            return;
+          }
+
+          if (browserCaptureSuccess) {
+            activeDownloads.delete(downloadId);
+            win?.webContents.send('download-progress', {
+              id: downloadId,
+              progress: 100,
+              eta: undefined,
+            });
+            win?.webContents.send('download-complete', { id: downloadId });
+            resolve({ id: downloadId, status: 'completed' });
+            return;
+          }
+
+          activeDownloads.delete(downloadId);
+          console.warn('[Photo Download] Hidden-player screenshot failed, falling back to direct stream extraction');
+        }
+
+        if (!isFfmpegAvailable()) {
+          win?.webContents.send('download-error', {
+            id: downloadId,
+            error: 'Screenshot capture failed and ffmpeg fallback is unavailable. Install ffmpeg and retry.'
+          });
+          resolve({ id: downloadId, status: 'error' });
+          return;
+        }
+
+        win?.webContents.send('download-progress', {
+          id: downloadId,
+          progress: 12,
+          eta: 'resolving stream URL',
+        });
+
+        const resolveStreamArgs = [
+          '--get-url',
+          '--no-playlist',
+          '--no-warnings',
+          '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          '--referer', opts.referer || timestampRequest.cleanUrl,
+          '-f', 'bv*[vcodec!=none]/bv/best',
+          timestampRequest.cleanUrl,
+        ];
+
+        if (opts.cookiesFromBrowser) {
+          resolveStreamArgs.splice(resolveStreamArgs.length - 1, 0, '--cookies-from-browser', opts.cookiesFromBrowser);
+        }
+
+        const resolveUrlProc = spawn(getYtDlpPath(), resolveStreamArgs);
+        activeDownloads.set(downloadId, {
+          process: resolveUrlProc,
+          options: opts,
+          progress: 5,
+        });
+        const resolveUrlTimeout = setTimeout(() => {
+          try {
+            resolveUrlProc.kill('SIGTERM');
+          } catch {
+            // Ignore timeout kill failures.
+          }
+        }, 60000);
+
+        let streamOutput = '';
+        resolveUrlProc.stdout.on('data', (data: Buffer) => {
+          streamOutput += data.toString();
+        });
+
+        resolveUrlProc.on('close', (streamCode: number | null) => {
+          clearTimeout(resolveUrlTimeout);
+          if (intentionallyCanceledIds.has(downloadId)) {
+            intentionallyCanceledIds.delete(downloadId);
+            activeDownloads.delete(downloadId);
+            resolve({ id: downloadId, status: 'canceled' });
+            return;
+          }
+
+          if (intentionallyPausedIds.has(downloadId)) {
+            intentionallyPausedIds.delete(downloadId);
+            pausedDownloads.set(downloadId, opts);
+            activeDownloads.delete(downloadId);
+            resolve({ id: downloadId, status: 'paused' });
+            return;
+          }
+
+          if (streamCode !== 0) {
+            activeDownloads.delete(downloadId);
+            win?.webContents.send('download-error', {
+              id: downloadId,
+              error: 'Failed to resolve direct video stream URL for screenshot'
+            });
+            resolve({ id: downloadId, status: 'error' });
+            return;
+          }
+
+          const streamUrl = streamOutput
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .find((line) => /^https?:\/\//i.test(line));
+
+          if (!streamUrl) {
+            activeDownloads.delete(downloadId);
+            win?.webContents.send('download-error', {
+              id: downloadId,
+              error: 'Could not find a playable stream URL for screenshot capture'
+            });
+            resolve({ id: downloadId, status: 'error' });
+            return;
+          }
+
+          const ffmpegArgs = [
+            '-hide_banner',
+            '-loglevel', 'error',
+            '-y',
+            '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            '-headers', `Referer: ${opts.referer || timestampRequest.cleanUrl}\r\n`,
+            '-ss', timestampRequest.seconds.toFixed(3),
+            '-i', streamUrl,
+            '-frames:v', '1',
+            '-q:v', '2',
+            '-an',
+            finalImagePath,
+          ];
+
+          win?.webContents.send('download-progress', {
+            id: downloadId,
+            progress: 40,
+            eta: 'capturing frame',
+          });
+
+          const ffmpegProc = spawn('ffmpeg', ffmpegArgs);
+          activeDownloads.set(downloadId, {
+            process: ffmpegProc,
+            options: opts,
+            progress: 90,
+          });
+          const ffmpegTimeout = setTimeout(() => {
+            try {
+              ffmpegProc.kill('SIGTERM');
+            } catch {
+              // Ignore timeout kill failures.
+            }
+          }, 120000);
+
+          ffmpegProc.on('close', (ffmpegCode: number | null) => {
+            clearTimeout(ffmpegTimeout);
+            if (intentionallyCanceledIds.has(downloadId)) {
+              intentionallyCanceledIds.delete(downloadId);
+              activeDownloads.delete(downloadId);
+              resolve({ id: downloadId, status: 'canceled' });
+              return;
+            }
+
+            if (intentionallyPausedIds.has(downloadId)) {
+              intentionallyPausedIds.delete(downloadId);
+              pausedDownloads.set(downloadId, opts);
+              activeDownloads.delete(downloadId);
+              resolve({ id: downloadId, status: 'paused' });
+              return;
+            }
+
+            activeDownloads.delete(downloadId);
+
+            if (ffmpegCode === 0) {
+              win?.webContents.send('download-progress', {
+                id: downloadId,
+                progress: 100,
+                eta: undefined,
+              });
+              win?.webContents.send('download-complete', { id: downloadId });
+              resolve({ id: downloadId, status: 'completed' });
+              return;
+            }
+
+            win?.webContents.send('download-error', {
+              id: downloadId,
+              error: 'Failed to capture screenshot frame at requested timestamp'
+            });
+            resolve({ id: downloadId, status: 'error' });
+          });
+
+          ffmpegProc.on('error', () => {
+            clearTimeout(ffmpegTimeout);
+            activeDownloads.delete(downloadId);
+            win?.webContents.send('download-error', {
+              id: downloadId,
+              error: 'Failed to run ffmpeg for timestamp screenshot'
+            });
+            resolve({ id: downloadId, status: 'error' });
+          });
+        });
+
+        resolveUrlProc.on('error', () => {
+          clearTimeout(resolveUrlTimeout);
+          activeDownloads.delete(downloadId);
+          win?.webContents.send('download-error', {
+            id: downloadId,
+            error: 'Failed to start stream URL extraction for screenshot'
+          });
+          resolve({ id: downloadId, status: 'error' });
+        });
+      });
+    }
+
     console.log('[Photo Download] Fetching metadata for photo download...');
+    const photoSourceUrl = timestampRequest?.cleanUrl || opts.url;
 
     return new Promise(async (resolve) => {
-      const direct = await extractDirectMediaFromHtml(opts.url, opts.cookiesFromBrowser);
+      win?.webContents.send('download-progress', {
+        id: downloadId,
+        progress: 2,
+        eta: 'fetching thumbnail metadata',
+      });
+      const direct = await extractDirectMediaFromHtml(photoSourceUrl, opts.cookiesFromBrowser);
 
       // Fast path: use HTML-extracted thumbnail/image when available.
       if (direct.thumbnail || direct.mediaUrl) {
@@ -2227,6 +2915,12 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
             process: { kill: () => { } },
             options: opts,
             progress: 0
+          });
+
+          win?.webContents.send('download-progress', {
+            id: downloadId,
+            progress: 6,
+            eta: 'downloading image',
           });
 
           const success = await downloadFile(preferredImageUrl, outputPath, downloadId, win);
@@ -2249,8 +2943,8 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
         '--dump-single-json',
         '--no-warnings',
         '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        '--referer', opts.url,
-        opts.url
+        '--referer', photoSourceUrl,
+        photoSourceUrl
       ];
 
       if (opts.cookiesFromBrowser) {
@@ -2288,6 +2982,12 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
                 progress: 0
               });
 
+              win?.webContents.send('download-progress', {
+                id: downloadId,
+                progress: 6,
+                eta: 'downloading image',
+              });
+
               const success = await downloadFile(thumbnailUrl, outputPath, downloadId, win);
 
               activeDownloads.delete(downloadId);
@@ -2307,7 +3007,7 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
                 const photoOutputPath = path.join(stagingDir, photoOutputTemplate);
 
                 const fallbackArgs: string[] = [
-                  opts.url,
+                  photoSourceUrl,
                   '-o', photoOutputPath,
                   '--skip-download',
                   '--write-thumbnail',
@@ -2315,7 +3015,7 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
                   '--no-playlist',
                   '--no-warnings',
                   '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                  '--referer', opts.referer || opts.url,
+                  '--referer', opts.referer || photoSourceUrl,
                 ];
 
                 if (opts.cookiesFromBrowser) {
@@ -2323,6 +3023,11 @@ ipcMain.handle('start-download', async (_event, options: DownloadOptions | strin
                 }
 
                 const fallbackProc = spawn(getYtDlpPath(), fallbackArgs);
+                win?.webContents.send('download-progress', {
+                  id: downloadId,
+                  progress: 45,
+                  eta: 'extracting thumbnail',
+                });
                 fallbackProc.on('close', async (fallbackCode: number | null) => {
                   if (fallbackCode === 0) {
                     try {

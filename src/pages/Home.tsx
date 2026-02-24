@@ -5,6 +5,8 @@ import {
     Link as LinkIcon,
     Video,
     Music,
+    Image as ImageIcon,
+    Camera,
     Pause,
     Play,
     Trash2,
@@ -53,6 +55,28 @@ const Home: React.FC = () => {
     } = useDownloads();
 
     const isValidMediaUrl = (value: string) => value.startsWith('http://') || value.startsWith('https://');
+
+    const hasTimestampMarker = (urlStr: string): boolean => {
+        if (!urlStr) return false;
+
+        try {
+            const parsed = new URL(urlStr);
+            const maybeTimestamp = parsed.searchParams.get('t')
+                || parsed.searchParams.get('start')
+                || parsed.searchParams.get('time_continue');
+            if (maybeTimestamp && maybeTimestamp.trim().length > 0) return true;
+
+            const hash = parsed.hash.replace(/^#/, '').trim();
+            if (!hash) return false;
+
+            if (/^(t|start)=/i.test(hash)) return true;
+            return /^\d+(?:\.\d+)?$/.test(hash) || /^\d+h(?:\d+m)?(?:\d+s)?$/i.test(hash) || /^\d+m(?:\d+s)?$/i.test(hash);
+        } catch {
+            return /[?&#](t|start|time_continue)=/i.test(urlStr) || /#(?:t|start)=/i.test(urlStr);
+        }
+    };
+
+    const hasTimestampInUrl = hasTimestampMarker(url);
 
     const isDirectPlaylistUrl = (urlStr: string): boolean => {
         if (!urlStr) return false;
@@ -200,12 +224,14 @@ const Home: React.FC = () => {
         format: 'video' | 'audio' | 'photo',
         quality?: string,
         outputDir?: string,
-        turboOverride?: { enabled: boolean; adaptive?: boolean; connections?: number }
+        turboOverride?: { enabled: boolean; adaptive?: boolean; connections?: number },
+        photoTimestampMode?: 'screenshot' | 'thumbnail'
     ) => {
         setShowFormatSelector(false);
         await addDownload(url, format, quality, {
             outputDir,
             turboOverride,
+            photoTimestampMode,
         });
         setUrl('');
         setVideoInfo(null);
@@ -245,7 +271,7 @@ const Home: React.FC = () => {
                             A simpler path from link to file.
                         </h1>
                         <p className="text-foreground/65 text-sm leading-relaxed max-w-2xl">
-                            Paste a media URL, choose format, and download with reliable defaults for video, audio, and playlists.
+                            Paste a media URL, choose format, and download with reliable defaults for video, audio, photo, and playlists, including timestamp screenshots from links like `?t=109`.
                         </p>
                         <div className="flex gap-4 flex-wrap mt-1 text-xs text-foreground/55">
                             <span>Live metadata preview</span>
@@ -332,6 +358,7 @@ const Home: React.FC = () => {
 
                     <div className="flex gap-2 flex-wrap">
                         <button
+                            type="button"
                             onClick={() => {
                                 if (url) {
                                     addDownload(url, 'video', settings.defaultQuality);
@@ -351,6 +378,7 @@ const Home: React.FC = () => {
                             Quick video (default)
                         </button>
                         <button
+                            type="button"
                             onClick={() => {
                                 if (url) {
                                     addDownload(url, 'audio');
@@ -369,6 +397,52 @@ const Home: React.FC = () => {
                             <Music className="w-3.5 h-3.5" />
                             Quick audio
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (url) {
+                                    addDownload(url, 'photo', undefined, {
+                                        photoTimestampMode: 'thumbnail',
+                                    });
+                                    setUrl('');
+                                    setVideoInfo(null);
+                                }
+                            }}
+                            disabled={!url}
+                            className={cn(
+                                "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all border",
+                                url
+                                    ? "border-warning/30 bg-warning/10 text-foreground"
+                                    : "border-foreground/10 bg-secondary/40 text-foreground/40"
+                            )}
+                        >
+                            <ImageIcon className="w-3.5 h-3.5" />
+                            Thumbnail
+                        </button>
+                        {hasTimestampInUrl && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (url) {
+                                        addDownload(url, 'photo', undefined, {
+                                            photoTimestampMode: 'screenshot',
+                                        });
+                                        setUrl('');
+                                        setVideoInfo(null);
+                                    }
+                                }}
+                                disabled={!url}
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all border",
+                                    url
+                                        ? "border-warning/40 bg-warning/15 text-foreground"
+                                        : "border-foreground/10 bg-secondary/40 text-foreground/40"
+                                )}
+                            >
+                                <Camera className="w-3.5 h-3.5" />
+                                Screenshot
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={() => setShowSearchModal(true)}
@@ -523,6 +597,7 @@ const Home: React.FC = () => {
                 defaultTurboEnabled={settings.enableTurboDownload}
                 defaultAdaptiveTurbo={settings.adaptiveTurboDownload}
                 defaultTurboConnections={settings.turboConnections}
+                hasTimestampInUrl={hasTimestampInUrl}
             />
 
             {/* Search Modal */}

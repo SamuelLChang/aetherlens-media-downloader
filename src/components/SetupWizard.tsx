@@ -24,6 +24,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ isOpen, onClose }) => {
   const [status, setStatus] = useState<RuntimeStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedDependencyId, setCopiedDependencyId] = useState<string>('');
+  const [allowLimitedMode, setAllowLimitedMode] = useState(false);
 
   const refreshStatus = async () => {
     if (!window.electronAPI?.getRuntimeDependenciesStatus) return;
@@ -41,6 +42,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (!isOpen) return;
+    setAllowLimitedMode(false);
     refreshStatus();
   }, [isOpen]);
 
@@ -148,13 +150,29 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ isOpen, onClose }) => {
 
         {missingRequired.length > 0 && (
           <div className="mt-4 rounded-lg border border-warning/25 bg-warning/10 p-3 text-sm text-warning">
-            Some required dependencies are missing. Downloads may fail until you install them.
+            Required tools are missing. Install them first for full functionality, or explicitly continue in limited mode.
           </div>
         )}
 
+        {missingRequired.length > 0 && (
+          <label className="mt-3 flex items-start gap-2 text-xs text-foreground/70">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={allowLimitedMode}
+              onChange={(event) => setAllowLimitedMode(event.target.checked)}
+            />
+            I understand downloads may fail until required tools are installed.
+          </label>
+        )}
+
         <div className="mt-6 flex items-center justify-end gap-2">
-          <button onClick={onClose} className="btn-primary px-4 py-2 rounded-lg">
-            {missingRequired.length > 0 ? 'Continue Anyway' : 'Continue'}
+          <button
+            onClick={onClose}
+            disabled={missingRequired.length > 0 && !allowLimitedMode}
+            className="btn-primary px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {missingRequired.length > 0 ? 'Continue In Limited Mode' : 'Continue'}
           </button>
         </div>
       </div>
