@@ -114,13 +114,13 @@ const defaultSettings: DownloadSettings = {
     // Enhanced defaults
     embedSubtitles: false,
     subtitleLanguages: ['en', 'tr'],
-    embedMetadata: true,
-    preserveThumbnail: true,
+    embedMetadata: false,
+    preserveThumbnail: false,
     embedAltAudio: false,
     preferredAudioLang: 'original',
     cookiesFromBrowser: '',
-    enableTurboDownload: true,
-    adaptiveTurboDownload: true,
+    enableTurboDownload: false,
+    adaptiveTurboDownload: false,
     turboConnections: 8,
 };
 
@@ -142,10 +142,22 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Load history, downloads, and settings from localStorage on mount
     useEffect(() => {
         try {
+            const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+            const resolvedSettings: DownloadSettings = savedSettings
+                ? { ...defaultSettings, ...JSON.parse(savedSettings) }
+                : defaultSettings;
+
+            setSettings(resolvedSettings);
+
             const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
-            if (savedHistory) {
+            if (resolvedSettings.historyEnabled && savedHistory) {
                 setHistory(JSON.parse(savedHistory));
+            } else {
+                // Privacy-first behavior: never retain hidden history when tracking is off.
+                setHistory([]);
+                localStorage.removeItem(HISTORY_STORAGE_KEY);
             }
+
             const savedDownloads = localStorage.getItem(DOWNLOADS_STORAGE_KEY);
             if (savedDownloads) {
                 // Restore downloads, marking any that were in progress as interrupted
@@ -158,10 +170,6 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     return d;
                 });
                 setDownloads(restoredDownloads);
-            }
-            const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-            if (savedSettings) {
-                setSettings({ ...defaultSettings, ...JSON.parse(savedSettings) });
             }
         } catch (e) {
             console.error('Failed to load from localStorage:', e);
@@ -196,6 +204,21 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     useEffect(() => {
         scheduleSave(HISTORY_STORAGE_KEY, history, historySaveTimer, settings.historyEnabled);
     }, [history, settings.historyEnabled, scheduleSave]);
+
+    useEffect(() => {
+        if (settings.historyEnabled) return;
+
+        if (historySaveTimer.current) {
+            clearTimeout(historySaveTimer.current);
+            historySaveTimer.current = null;
+        }
+
+        if (history.length > 0) {
+            setHistory([]);
+        }
+
+        localStorage.removeItem(HISTORY_STORAGE_KEY);
+    }, [settings.historyEnabled, history]);
 
     useEffect(() => {
         scheduleSave(SETTINGS_STORAGE_KEY, settings, settingsSaveTimer);

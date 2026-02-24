@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, Folder, Download, History, Monitor, Subtitles, Music2, Tag, Globe, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Moon, Sun, Folder, Download, History, Subtitles, Music2, Tag, Globe, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useDownloads } from '../context/DownloadContext';
 import { cn } from '../lib/utils';
@@ -80,12 +80,10 @@ const SettingsPanel: React.FC = () => {
     const { settings, updateSettings, history, clearHistory, getAvailableBrowsers, validateBrowserCookies } = useDownloads();
     const [browsers, setBrowsers] = useState<{ id: string; name: string }[]>([]);
     const [cookieStatus, setCookieStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid' | 'unknown'>('idle');
-    const [appVersion, setAppVersion] = useState('0.0.0');
     const [downloadLocation, setDownloadLocation] = useState<{ path: string; defaultPath: string; isDefault: boolean } | null>(null);
 
     useEffect(() => {
         loadBrowsers();
-        loadAppInfo();
         loadDownloadLocation();
     }, []);
 
@@ -93,19 +91,6 @@ const SettingsPanel: React.FC = () => {
         const result = await getAvailableBrowsers();
         if (result.success && result.browsers) {
             setBrowsers(result.browsers);
-        }
-    };
-
-    const loadAppInfo = async () => {
-        try {
-            if (window.electronAPI?.getAppInfo) {
-                const result = await window.electronAPI.getAppInfo();
-                if (result?.success && result.data?.version) {
-                    setAppVersion(result.data.version);
-                }
-            }
-        } catch {
-            // Keep fallback version text when app info is unavailable.
         }
     };
 
@@ -145,13 +130,16 @@ const SettingsPanel: React.FC = () => {
 
     const handleToggleHistory = () => {
         if (settings.historyEnabled) {
-            const clearExisting = window.confirm(
-                'History will be disabled.\n\nPress OK to disable and clear existing history.\nPress Cancel to disable and keep existing entries.'
+            const shouldDisable = window.confirm(
+                'Disable download history?\n\nFor privacy, existing history will be removed immediately.'
             );
-            updateSettings({ historyEnabled: false });
-            if (clearExisting) {
-                clearHistory();
+
+            if (!shouldDisable) {
+                return;
             }
+
+            updateSettings({ historyEnabled: false });
+            clearHistory();
             return;
         }
 
@@ -547,21 +535,6 @@ const SettingsPanel: React.FC = () => {
                     </div>
                 </div>
 
-                {/* About Section */}
-                <div>
-                    <h2 className="text-sm font-semibold text-foreground/40 uppercase tracking-wider mb-4">
-                        About
-                    </h2>
-                    <div className="bg-secondary/30 rounded-2xl p-4 border border-white/5">
-                        <SettingsRow
-                            icon={<Monitor className="w-4 h-4" />}
-                            title="AetherLens Media Downloader"
-                            description={`Version ${appVersion} • Built with Electron + React`}
-                        >
-                            <span className="text-xs text-foreground/40">yt-dlp powered</span>
-                        </SettingsRow>
-                    </div>
-                </div>
             </div>
         </div>
     );

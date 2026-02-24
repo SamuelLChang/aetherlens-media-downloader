@@ -6,6 +6,7 @@ import Downloads from '../pages/Downloads';
 import History from '../pages/History';
 import Settings from '../pages/Settings';
 import Info from '../pages/Info';
+import System from '../pages/System';
 import AetherLensLogo from './AetherLensLogo';
 import SetupWizard from './SetupWizard';
 
@@ -13,12 +14,13 @@ import SetupWizard from './SetupWizard';
 
 const SETUP_COMPLETE_STORAGE_KEY = 'aetherlens-setup-complete-v1';
 
-type Page = 'home' | 'downloads' | 'history' | 'settings' | 'info';
+type Page = 'home' | 'downloads' | 'history' | 'system' | 'settings' | 'info';
 
 const pageMap: Record<Page, React.ReactNode> = {
     home: <Home />,
     downloads: <Downloads />,
     history: <History />,
+    system: <System />,
     settings: <Settings />,
     info: <Info />,
 };

@@ -15,6 +15,11 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
+const UPDATE_REPO_OWNER = 'SamuelLChang';
+const UPDATE_REPO_NAME = 'aetherlens-media-downloader';
+const LATEST_RELEASE_API_URL = `https://api.github.com/repos/${UPDATE_REPO_OWNER}/${UPDATE_REPO_NAME}/releases/latest`;
+const UPDATE_DOWNLOAD_PAGE_URL = 'https://samuellchang.github.io/aetherlens-media-downloader/download/';
+
 let win: BrowserWindow | null
 
 // Store active download processes with their options for resume capability
@@ -184,6 +189,82 @@ const getInstallCommandMap = () => {
     ffmpeg: 'Debian/Ubuntu: sudo apt install -y ffmpeg\nFedora: sudo dnf install -y ffmpeg\nArch: sudo pacman -S --needed ffmpeg',
     aria2: 'Debian/Ubuntu: sudo apt install -y aria2\nFedora: sudo dnf install -y aria2\nArch: sudo pacman -S --needed aria2',
   };
+};
+
+const normalizeVersion = (value: string): string => {
+  return value
+    .trim()
+    .replace(/^v/i, '')
+    .replace(/\+.*$/, '');
+};
+
+const parseSemver = (value: string): { core: number[]; prerelease?: string } => {
+  const normalized = normalizeVersion(value);
+  const [corePart, prerelease] = normalized.split('-', 2);
+  const core = corePart
+    .split('.')
+    .map((segment) => Number.parseInt(segment, 10))
+    .map((segment) => (Number.isFinite(segment) ? segment : 0));
+
+  while (core.length < 3) {
+    core.push(0);
+  }
+
+  return {
+    core,
+    prerelease: prerelease || undefined,
+  };
+};
+
+const compareSemver = (left: string, right: string): number => {
+  const a = parseSemver(left);
+  const b = parseSemver(right);
+
+  for (let i = 0; i < 3; i += 1) {
+    const delta = a.core[i] - b.core[i];
+    if (delta !== 0) return delta;
+  }
+
+  if (!a.prerelease && b.prerelease) return 1;
+  if (a.prerelease && !b.prerelease) return -1;
+  if (!a.prerelease && !b.prerelease) return 0;
+
+  return String(a.prerelease).localeCompare(String(b.prerelease), undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  });
+};
+
+const fetchLatestRelease = async (): Promise<{
+  tag_name?: string;
+  html_url?: string;
+  published_at?: string;
+}> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await fetch(LATEST_RELEASE_API_URL, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/vnd.github+json',
+        'User-Agent': `${UPDATE_REPO_NAME}/${app.getVersion()}`,
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('No published release found yet.');
+      }
+
+      throw new Error(`GitHub API returned ${response.status}`);
+    }
+
+    return await response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
 };
 
 const clampTurboConnections = (value?: number): number => {
@@ -1776,6 +1857,39 @@ ipcMain.handle('get-app-info', async () => {
       node: process.versions.node,
     }
   };
+});
+
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    const currentVersion = normalizeVersion(app.getVersion());
+    const latestRelease = await fetchLatestRelease();
+    const latestVersion = normalizeVersion(latestRelease.tag_name || '');
+
+    if (!latestVersion) {
+      return {
+        success: false,
+        error: 'Latest release version could not be determined.',
+      };
+    }
+
+    const updateAvailable = compareSemver(currentVersion, latestVersion) < 0;
+
+    return {
+      success: true,
+      data: {
+        currentVersion,
+        latestVersion,
+        updateAvailable,
+        releaseUrl: UPDATE_DOWNLOAD_PAGE_URL,
+        publishedAt: latestRelease.published_at || null,
+      }
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error?.message || 'Failed to check for updates.',
+    };
+  }
 });
 
 ipcMain.handle('get-download-location', async () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Download, Clock, Settings, Info } from 'lucide-react';
+import { Home, Download, Clock, Settings, Info, ShieldCheck } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface SidebarProps {
@@ -17,6 +17,7 @@ const navItems: NavItem[] = [
     { id: 'home', label: 'Home', icon: <Home className="w-5 h-5" /> },
     { id: 'downloads', label: 'Downloads', icon: <Download className="w-5 h-5" /> },
     { id: 'history', label: 'History', icon: <Clock className="w-5 h-5" /> },
+    { id: 'system', label: 'System', icon: <ShieldCheck className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
 ];
 

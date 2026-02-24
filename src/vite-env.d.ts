@@ -74,6 +74,17 @@ interface Window {
                 node: string;
             };
         }>;
+        checkForUpdates: () => Promise<{
+            success: boolean;
+            data?: {
+                currentVersion: string;
+                latestVersion: string;
+                updateAvailable: boolean;
+                releaseUrl: string;
+                publishedAt: string | null;
+            };
+            error?: string;
+        }>;
         getRuntimeDependenciesStatus: () => Promise<{
             success: boolean;
             data?: {
