@@ -64,6 +64,27 @@ npm install
 npm run dev
 ```
 
+## One-Click Installer Downloads
+
+You do not need to clone/build locally once releases are published.
+
+- Download page: `https://samuellchang.github.io/aetherlens-media-downloader/download/`
+- Full releases: `https://github.com/SamuelLChang/aetherlens-media-downloader/releases`
+
+How publishing works:
+
+1. Push a version tag like `v0.2.0`.
+2. GitHub Actions builds Windows, macOS, and Linux installers.
+3. The workflow uploads all installers to a GitHub Release automatically.
+4. The download page reads the latest release and shows direct platform buttons.
+
+### Enable GitHub Pages (one-time)
+
+1. Open repository `Settings` -> `Pages`.
+2. Source: `Deploy from a branch`.
+3. Branch: `main`, folder: `/docs`.
+4. Save, then open `/download/` under your Pages URL.
+
 ## Installation Guide (Step By Step)
 
 This section is designed for first-time users. If you follow the steps in order, the app should run without extra troubleshooting.
