@@ -1,22 +1,59 @@
 import { ipcRenderer, contextBridge } from 'electron'
 
+const onChannels = new Set([
+  'main-process-message',
+  'download-progress',
+  'download-complete',
+  'download-error',
+])
+
+const sendChannels = new Set([
+  'window-minimize',
+  'window-maximize',
+  'window-close',
+])
+
+const invokeChannels = new Set([
+  'get-video-info',
+  'start-download',
+  'cancel-download',
+  'pause-download',
+  'resume-download',
+  'open-downloads-folder',
+  'open-folder',
+  'get-download-location',
+  'select-download-location',
+  'pick-download-location-once',
+  'reset-download-location',
+  'get-playlist-info',
+  'search-videos',
+  'get-available-browsers',
+  'validate-browser-cookies',
+  'get-app-info',
+  'check-for-updates',
+  'get-runtime-dependencies-status',
+  'open-external-url',
+])
+
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
-  on(...args: Parameters<typeof ipcRenderer.on>) {
-    const [channel, listener] = args
+  on(channel: string, listener: (event: Electron.IpcRendererEvent, ...args: unknown[]) => void) {
+    if (!onChannels.has(channel)) return
     return ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
   },
-  off(...args: Parameters<typeof ipcRenderer.off>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.off(channel, ...omit)
+  off(channel: string, listener: (event: Electron.IpcRendererEvent, ...args: unknown[]) => void) {
+    if (!onChannels.has(channel)) return
+    return ipcRenderer.off(channel, listener)
   },
-  send(...args: Parameters<typeof ipcRenderer.send>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.send(channel, ...omit)
+  send(channel: string, ...args: unknown[]) {
+    if (!sendChannels.has(channel)) return
+    return ipcRenderer.send(channel, ...args)
   },
-  invoke(...args: Parameters<typeof ipcRenderer.invoke>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.invoke(channel, ...omit)
+  invoke(channel: string, ...args: unknown[]) {
+    if (!invokeChannels.has(channel)) {
+      return Promise.reject(new Error(`Blocked IPC invoke channel: ${channel}`))
+    }
+    return ipcRenderer.invoke(channel, ...args)
   },
 })
 

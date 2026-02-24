@@ -365,36 +365,40 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (inflight) return inflight;
 
         const request = (async () => {
-            let result;
-            if (window.electronAPI?.getVideoInfo) {
-                result = await window.electronAPI.getVideoInfo(url, settings.cookiesFromBrowser || undefined);
-            } else if (window.ipcRenderer) {
-                result = await window.ipcRenderer.invoke('get-video-info', url, settings.cookiesFromBrowser || undefined);
-            } else {
-                result = {
-                    success: true,
-                    data: {
-                        id: 'mock-id',
-                        title: 'Mock Video Title',
-                        thumbnail: 'https://via.placeholder.com/320x180',
-                        duration: 245,
-                        uploader: 'Mock Channel',
-                        view_count: 12345,
-                        videoQualities: [1080, 720, 480],
-                        videoQualitySizes: {
-                            '1080': 220000000,
-                            '720': 130000000,
-                            '480': 70000000,
-                        },
-                    }
-                };
-            }
+            try {
+                let result;
+                if (window.electronAPI?.getVideoInfo) {
+                    result = await window.electronAPI.getVideoInfo(url, settings.cookiesFromBrowser || undefined);
+                } else if (window.ipcRenderer) {
+                    result = await window.ipcRenderer.invoke('get-video-info', url, settings.cookiesFromBrowser || undefined);
+                } else {
+                    result = {
+                        success: true,
+                        data: {
+                            id: 'mock-id',
+                            title: 'Mock Video Title',
+                            thumbnail: 'https://via.placeholder.com/320x180',
+                            duration: 245,
+                            uploader: 'Mock Channel',
+                            view_count: 12345,
+                            videoQualities: [1080, 720, 480],
+                            videoQualitySizes: {
+                                '1080': 220000000,
+                                '720': 130000000,
+                                '480': 70000000,
+                            },
+                        }
+                    };
+                }
 
-            if (result.success && result.data) {
-                videoInfoCache.current.set(url, { data: result.data, timestamp: Date.now() });
+                if (result.success && result.data) {
+                    videoInfoCache.current.set(url, { data: result.data, timestamp: Date.now() });
+                }
+                return result;
+            } finally {
+                // Always clear in-flight marker, including rejected requests.
+                videoInfoInflight.current.delete(url);
             }
-            videoInfoInflight.current.delete(url);
-            return result;
         })();
 
         videoInfoInflight.current.set(url, request);
@@ -523,6 +527,10 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     }
                 }, 500);
                 return;
+            }
+
+            if (!result || result.status !== 'started') {
+                throw new Error(result?.error || 'Download did not start');
             }
 
             if (result?.id && result.id !== downloadOptions.id) {
