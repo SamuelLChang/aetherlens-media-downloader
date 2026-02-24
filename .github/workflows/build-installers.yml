@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: Build app and installers
-        run: npm run build
+        run: npm run build -- --publish never
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
