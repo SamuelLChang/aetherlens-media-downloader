@@ -1,953 +1,1077 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AetherLens | Media Downloader</title>
-    <meta
-      name="description"
-      content="Download videos and playlists with a clean desktop workflow. One-click installers for Windows, macOS, and Linux."
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --bg: #f8f4ec;
-        --bg-strong: #ece4d1;
-        --ink: #102119;
-        --ink-soft: #314239;
-        --accent: #16673f;
-        --accent-2: #cb7e2c;
-        --card: rgba(255, 255, 255, 0.75);
-        --card-border: rgba(16, 33, 25, 0.14);
-        --shadow: 0 14px 35px rgba(14, 23, 17, 0.14);
-        --radius-lg: 22px;
-        --radius-md: 16px;
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AetherLens — Media Downloader</title>
+  <meta name="description"
+    content="Download videos and playlists with a clean desktop workflow. One-click installers for Windows, macOS, and Linux." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700&family=JetBrains+Mono:wght@500&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #121215;
+      --surface-2: #1a1a1f;
+      --border: #27272a;
+      --border-focus: #3f3f46;
+      --text: #fafafa;
+      --text-2: #a1a1aa;
+      --text-3: #71717a;
+      --blue: #3b82f6;
+      --cyan: #22d3ee;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.55;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Subtle top gradient — not the usual floating orbs */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 70vh;
+      background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.08), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      width: min(1080px, 100% - 3rem);
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Navbar ── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      padding: 0.85rem 0;
+      background: rgba(9, 9, 11, 0.82);
+      backdrop-filter: blur(14px) saturate(1.6);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo img {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+    }
+
+    .logo span {
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: -0.01em;
+    }
+
+    .topnav {
+      display: flex;
+      align-items: center;
+      gap: 0.15rem;
+    }
+
+    .topnav a {
+      color: var(--text-3);
+      text-decoration: none;
+      font-size: 0.84rem;
+      font-weight: 500;
+      padding: 0.4rem 0.7rem;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .topnav a:hover {
+      color: var(--text-2);
+      background: var(--surface);
+    }
+
+    .topnav .gh {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-left: 0.3rem;
+      padding: 0.35rem 0.7rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-2);
+      font-size: 0.82rem;
+    }
+
+    .topnav .gh:hover {
+      border-color: var(--border-focus);
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    .gh-icon {
+      width: 15px;
+      height: 15px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 6rem 0 4rem;
+      max-width: 640px;
+    }
+
+    .hero-tag {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--blue);
+      letter-spacing: 0.04em;
+      margin-bottom: 1.2rem;
+      opacity: 0;
+      animation: up 0.5s 0.05s ease forwards;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.035em;
+      color: var(--text);
+      opacity: 0;
+      animation: up 0.5s 0.12s ease forwards;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-desc {
+      margin-top: 1rem;
+      color: var(--text-2);
+      font-size: 1.05rem;
+      max-width: 48ch;
+      opacity: 0;
+      animation: up 0.5s 0.2s ease forwards;
+    }
+
+    .hero-ctas {
+      margin-top: 1.8rem;
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: up 0.5s 0.28s ease forwards;
+    }
+
+    @keyframes up {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
       }
 
-      * {
-        box-sizing: border-box;
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.15rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.87rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: 0.15s ease;
+    }
+
+    .btn-fill {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-fill:hover {
+      background: #4b8ef7;
+    }
+
+    .btn-fill:active {
+      transform: scale(0.97);
+    }
+
+    .btn-ghost {
+      background: var(--surface);
+      color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--border-focus);
+      color: var(--text);
+    }
+
+    .btn-sm {
+      padding: 0.5rem 0.95rem;
+      font-size: 0.82rem;
+    }
+
+    .dl-arrow {
+      width: 15px;
+      height: 15px;
+    }
+
+    /* ── Stats strip ── */
+    .stats {
+      margin-top: 3rem;
+      display: flex;
+      gap: 2.8rem;
+      flex-wrap: wrap;
+      padding-top: 1.6rem;
+      border-top: 1px solid var(--border);
+      opacity: 0;
+      animation: up 0.5s 0.35s ease forwards;
+    }
+
+    .stat-val {
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .stat-lbl {
+      font-size: 0.76rem;
+      color: var(--text-3);
+      margin-top: 0.1rem;
+    }
+
+    /* ── Sections ── */
+    .sect {
+      padding: 4rem 0;
+    }
+
+    .sect-label {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-3);
+      margin-bottom: 0.4rem;
+    }
+
+    .sect h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .sect-desc {
+      margin-top: 0.45rem;
+      color: var(--text-2);
+      font-size: 0.95rem;
+      max-width: 44ch;
+    }
+
+    .sect-top {
+      margin-bottom: 1.8rem;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+
+    .reveal.vis {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Downloads ── */
+    .dl-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .dl-card {
+      padding: 1.25rem;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 170px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .dl-card:hover {
+      border-color: var(--border-focus);
+    }
+
+    .dl-card.mine {
+      border-color: rgba(59, 130, 246, 0.35);
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.10);
+    }
+
+    .dl-card.mine .dl-rec {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--blue);
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.04em;
+    }
+
+    .dl-rec {
+      display: none;
+    }
+
+    .dl-os {
+      font-size: 0.85rem;
+      color: var(--text-3);
+      margin-bottom: 0.2rem;
+    }
+
+    .dl-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .dl-card .dl-sub {
+      font-size: 0.82rem;
+      color: var(--text-3);
+      margin: 0.25rem 0 0;
+    }
+
+    .dl-card .btn {
+      margin-top: auto;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .dl-tag {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .dl-tag-inner {
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      color: var(--text-3);
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Features ── */
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .feat {
+      padding: 1.3rem;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      transition: border-color 0.15s;
+    }
+
+    .feat:hover {
+      border-color: var(--border-focus);
+    }
+
+    .feat-ico {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      margin-bottom: 0.9rem;
+    }
+
+    .feat-ico svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-2);
+    }
+
+    .feat h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .feat p {
+      margin-top: 0.35rem;
+      font-size: 0.84rem;
+      color: var(--text-3);
+      line-height: 1.5;
+    }
+
+    /* ── Screenshots ── */
+    .shots {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    .shot {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      transition: border-color 0.15s;
+    }
+
+    .shot:hover {
+      border-color: var(--border-focus);
+    }
+
+    .shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .shot figcaption {
+      padding: 0.65rem 0.85rem;
+      font-size: 0.8rem;
+      color: var(--text-3);
+    }
+
+    /* ── Steps ── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+
+    .stp {
+      padding: 1.25rem;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      transition: border-color 0.15s;
+    }
+
+    .stp:hover {
+      border-color: var(--border-focus);
+    }
+
+    .stp-n {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-3);
+      margin-bottom: 0.6rem;
+    }
+
+    .stp h3 {
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .stp p {
+      margin-top: 0.3rem;
+      font-size: 0.82rem;
+      color: var(--text-3);
+      line-height: 1.5;
+    }
+
+    /* ── Footer ── */
+    .foot {
+      padding: 2rem 0;
+      margin-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--text-3);
+      text-align: center;
+    }
+
+    .foot a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .foot a:hover {
+      text-decoration: underline;
+    }
+
+    .foot-warn {
+      margin-top: 0.5rem;
+      font-size: 0.78rem;
+      color: var(--text-3);
+      max-width: 52ch;
+      margin-inline: auto;
+    }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal {
+      width: min(520px, 100%);
+      border-radius: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      padding: 1.5rem;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .modal-badge {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--blue);
+      letter-spacing: 0.03em;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+    }
+
+    .modal h3 {
+      margin: 0.7rem 0 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .modal p {
+      margin: 0.6rem 0 0;
+      color: var(--text-2);
+      font-size: 0.87rem;
+      line-height: 1.55;
+    }
+
+    .modal-verify {
+      margin-top: 0.9rem;
+      padding: 0.85rem;
+      border-radius: 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+
+    .modal-verify strong {
+      font-size: 0.82rem;
+    }
+
+    .modal-verify ul {
+      margin: 0.35rem 0 0;
+      padding-left: 1.1rem;
+      color: var(--text-3);
+      font-size: 0.82rem;
+    }
+
+    .modal-verify li {
+      margin: 0.15rem 0;
+    }
+
+    .modal-actions {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .modal-link {
+      color: var(--blue);
+      font-weight: 500;
+      text-decoration: none;
+      font-size: 0.84rem;
+    }
+
+    .modal-link:hover {
+      text-decoration: underline;
+    }
+
+    .modal-close {
+      background: var(--surface-2);
+      color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+
+    .modal-close:hover {
+      border-color: var(--border-focus);
+      color: var(--text);
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 860px) {
+
+      .dl-row,
+      .feat-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
 
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-      }
-
-      body {
-        font-family: "Space Grotesk", "Segoe UI", sans-serif;
-        color: var(--ink);
-        background:
-          radial-gradient(
-            circle at 12% 6%,
-            rgba(203, 126, 44, 0.35),
-            transparent 36%
-          ),
-          radial-gradient(
-            circle at 86% 2%,
-            rgba(22, 103, 63, 0.2),
-            transparent 42%
-          ),
-          linear-gradient(140deg, var(--bg), var(--bg-strong));
-        line-height: 1.5;
-      }
-
-      .grain {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        opacity: 0.18;
-        background-image: radial-gradient(
-          rgba(20, 24, 22, 0.12) 0.5px,
-          transparent 0.5px
-        );
-        background-size: 3px 3px;
-      }
-
-      .shell {
-        width: min(1120px, calc(100% - 2rem));
-        margin: 0 auto;
-      }
-
-      .nav {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 1rem 0;
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-      }
-
-      .brand img {
-        width: 34px;
-        height: 34px;
-      }
-
-      .nav a {
-        text-decoration: none;
-        color: var(--ink);
-        font-size: 0.95rem;
-      }
-
-      .nav-links {
-        display: flex;
-        gap: 1rem;
+      .steps {
+        grid-template-columns: repeat(2, 1fr);
       }
 
       .hero {
-        margin-top: 0.6rem;
-        display: grid;
-        grid-template-columns: 1.1fr 0.9fr;
-        gap: 1.25rem;
+        padding: 4rem 0 3rem;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .wrap {
+        width: calc(100% - 1.5rem);
       }
 
-      .hero-copy,
-      .hero-panel {
-        background: var(--card);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow);
-        backdrop-filter: blur(4px);
+      .topnav a:not(.gh) {
+        display: none;
       }
 
-      .hero-copy {
-        padding: 2rem;
+      .hero {
+        padding: 3rem 0 2rem;
       }
 
-      .kicker {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        font-size: 0.8rem;
-        border: 1px solid var(--card-border);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.75);
-        padding: 0.3rem 0.65rem;
+      .hero h1 {
+        font-size: 1.8rem;
       }
 
-      h1,
-      h2,
-      h3 {
-        font-family: "Syne", "Trebuchet MS", sans-serif;
-        line-height: 1.12;
-        margin: 0;
+      .stats {
+        gap: 1.5rem;
       }
 
-      h1 {
-        margin-top: 1rem;
-        font-size: clamp(2rem, 5.6vw, 4rem);
-      }
-
-      .hero p {
-        margin: 1rem 0 0;
-        color: var(--ink-soft);
-        max-width: 54ch;
-      }
-
-      .hero-actions {
-        margin-top: 1.35rem;
-        display: flex;
-        gap: 0.7rem;
-        flex-wrap: wrap;
-      }
-
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-        padding: 0.64rem 1rem;
-        font-weight: 700;
-        text-decoration: none;
-        border: 1px solid transparent;
-      }
-
-      .btn-primary {
-        background: linear-gradient(140deg, var(--accent), #1d7d4d);
-        color: #fff;
-      }
-
-      .btn-secondary {
-        background: rgba(255, 255, 255, 0.7);
-        color: var(--ink);
-        border-color: var(--card-border);
-      }
-
-      .hero-panel {
-        padding: 1.4rem;
-      }
-
-      .status {
-        margin-top: 0.75rem;
-        display: inline-flex;
-        font-size: 0.84rem;
-        background: rgba(255, 255, 255, 0.75);
-        border: 1px solid var(--card-border);
-        border-radius: 999px;
-        padding: 0.3rem 0.62rem;
-      }
-
-      .downloads {
-        margin-top: 0.9rem;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.7rem;
-      }
-
-      .download-card {
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius-md);
-        padding: 0.8rem;
-        background: rgba(255, 255, 255, 0.82);
-        min-height: 152px;
-      }
-
-      .download-card h3 {
-        font-size: 1.05rem;
-      }
-
-      .download-card p {
-        margin: 0.4rem 0 0.7rem;
-        font-size: 0.89rem;
-      }
-
-      .download-card .btn {
-        width: 100%;
-        font-size: 0.86rem;
-      }
-
-      .section {
-        margin-top: 1.6rem;
-      }
-
-      .section-head {
-        margin-bottom: 0.85rem;
-      }
-
-      .section-head p {
-        margin: 0.45rem 0 0;
-        color: var(--ink-soft);
-      }
-
-      .features {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.8rem;
-      }
-
-      .feature {
-        background: rgba(255, 255, 255, 0.74);
-        border: 1px solid var(--card-border);
-        border-radius: var(--radius-md);
-        padding: 1rem;
-      }
-
-      .feature h3 {
-        font-size: 1rem;
-      }
-
-      .feature p {
-        margin: 0.45rem 0 0;
-        color: var(--ink-soft);
-        font-size: 0.9rem;
-      }
-
-      .shots {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.9rem;
-      }
-
-      .shot {
-        overflow: hidden;
-        border-radius: 18px;
-        border: 1px solid var(--card-border);
-        background: rgba(255, 255, 255, 0.75);
-        box-shadow: var(--shadow);
-      }
-
-      .shot img {
-        display: block;
-        width: 100%;
-        height: auto;
-      }
-
-      .shot .caption {
-        padding: 0.72rem 0.82rem;
-        font-size: 0.9rem;
-        color: var(--ink-soft);
-      }
-
-      .workflow {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.8rem;
-      }
-
-      .step {
-        background: rgba(255, 255, 255, 0.8);
-        border-radius: var(--radius-md);
-        border: 1px solid var(--card-border);
-        padding: 0.9rem;
-      }
-
-      .step strong {
-        display: block;
-        font-size: 0.82rem;
-        letter-spacing: 0.04em;
-        opacity: 0.74;
-      }
-
-      .step p {
-        margin: 0.4rem 0 0;
-        font-size: 0.9rem;
-      }
-
-      .footer {
-        margin: 1.8rem 0 2.3rem;
-        padding: 1rem;
-        border-radius: var(--radius-md);
-        background: rgba(255, 255, 255, 0.82);
-        border: 1px solid var(--card-border);
-        font-size: 0.9rem;
-      }
-
-      .footer a {
-        color: var(--accent);
-        font-weight: 700;
-      }
-
-      .modal-backdrop {
-        position: fixed;
-        inset: 0;
-        z-index: 50;
-        display: grid;
-        place-items: center;
-        padding: 1rem;
-        background: rgba(12, 18, 14, 0.45);
-        backdrop-filter: blur(2px);
+      .dl-row,
+      .feat-grid,
+      .shots,
+      .steps {
+        grid-template-columns: 1fr;
       }
 
       .modal {
-        width: min(680px, 100%);
-        border-radius: 24px;
-        border: 1px solid rgba(16, 33, 25, 0.16);
-        background:
-          radial-gradient(
-            circle at 86% -20%,
-            rgba(203, 126, 44, 0.2),
-            transparent 56%
-          ),
-          linear-gradient(160deg, #fffef9, #f6f1e4);
-        box-shadow: 0 24px 54px rgba(11, 22, 16, 0.24);
-        padding: 1.4rem;
+        padding: 1.1rem;
       }
+    }
+  </style>
+</head>
 
-      .modal-head {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-      }
-
-      .modal-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.32rem 0.64rem;
-        border-radius: 999px;
-        border: 1px solid rgba(16, 33, 25, 0.16);
-        background: rgba(255, 255, 255, 0.72);
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        color: var(--ink);
-      }
-
-      .modal-badge-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: linear-gradient(140deg, var(--accent), #3a9d6d);
-      }
-
-      .modal h3 {
-        margin: 0.72rem 0 0;
-        font-size: clamp(1.25rem, 3.5vw, 1.7rem);
-        max-width: 22ch;
-      }
-
-      .modal p {
-        margin: 0.82rem 0 0;
-        color: var(--ink-soft);
-        line-height: 1.6;
-      }
-
-      .modal-verify {
-        margin-top: 0.92rem;
-        border-radius: 14px;
-        border: 1px solid rgba(16, 33, 25, 0.15);
-        background: rgba(255, 255, 255, 0.72);
-        padding: 0.78rem 0.86rem;
-      }
-
-      .modal-verify strong {
-        font-size: 0.88rem;
-        letter-spacing: 0.02em;
-      }
-
-      .modal-verify ul {
-        margin: 0.4rem 0 0;
-        padding-left: 1rem;
-        color: var(--ink-soft);
-      }
-
-      .modal-verify li {
-        margin: 0.22rem 0;
-      }
-
-      .modal-actions {
-        margin-top: 1.05rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.7rem;
-        flex-wrap: wrap;
-      }
-
-      .modal-link {
-        color: var(--accent);
-        font-weight: 700;
-        text-decoration: none;
-        border-bottom: 1px dashed rgba(22, 103, 63, 0.44);
-      }
-
-      .modal-link:hover {
-        filter: brightness(0.95);
-      }
-
-      .modal-close {
-        border: 1px solid rgba(16, 33, 25, 0.16);
-        background: rgba(255, 255, 255, 0.86);
-        color: var(--ink);
-      }
-
-      .modal-close:hover {
-        background: #fff;
-      }
-
-      [hidden] {
-        display: none !important;
-      }
-
-      @media (max-width: 980px) {
-        .hero {
-          grid-template-columns: 1fr;
-        }
-
-        .downloads {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        .features {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .workflow {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-
-      @media (max-width: 700px) {
-        .shell {
-          width: min(1120px, calc(100% - 1.2rem));
-        }
-
-        .nav {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-
-        .nav-links {
-          width: 100%;
-          justify-content: space-between;
-        }
-
-        .hero-copy,
-        .hero-panel {
-          padding: 1rem;
-        }
-
-        .downloads,
-        .features,
-        .shots,
-        .workflow {
-          grid-template-columns: 1fr;
-        }
-
-        .modal {
-          padding: 1rem;
-          border-radius: 18px;
-        }
-
-        .modal h3 {
-          margin-top: 0.62rem;
-          max-width: 100%;
-        }
-
-        .modal-actions {
-          align-items: flex-start;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="grain" aria-hidden="true"></div>
-    <div class="shell">
-      <header class="nav">
-        <div class="brand">
-          <img src="./aetherlens-mark.svg" alt="AetherLens logo" />
-          <span>AetherLens</span>
-        </div>
-        <nav class="nav-links" aria-label="Quick links">
-          <a href="#downloads">Downloads</a>
-          <a href="#screenshots">Screenshots</a>
-          <a href="#features">Features</a>
-          <a
-            href="https://github.com/SamuelLChang/aetherlens-media-downloader"
-            target="_blank"
-            rel="noreferrer"
-            >GitHub</a
-          >
-        </nav>
-      </header>
-
-      <main>
-        <section class="hero">
-          <article class="hero-copy">
-            <div class="kicker">
-              Desktop media downloads without command-line chaos
-            </div>
-            <h1>
-              Download videos, playlists, and audio with a cleaner workflow.
-            </h1>
-            <p>
-              AetherLens is a cross-platform desktop app powered by Electron,
-              React, and yt-dlp. Paste a URL, preview formats, choose quality,
-              and manage every job from one modern queue.
-            </p>
-            <div class="hero-actions">
-              <a class="btn btn-primary" href="#downloads">Get Installer</a>
-              <a class="btn btn-secondary" href="#screenshots">See The App</a>
-            </div>
-          </article>
-
-          <aside class="hero-panel" id="downloads">
-            <h2>Latest Release Downloads</h2>
-            <p>
-              Pick your platform installer. Links are loaded from the latest
-              GitHub release automatically.
-            </p>
-            <div class="status" id="status">Loading latest release...</div>
-            <div class="downloads" id="download-cards"></div>
-          </aside>
-        </section>
-
-        <section class="section" id="features">
-          <div class="section-head">
-            <h2>What The Program Does</h2>
-            <p>
-              From URL analysis to queue control, AetherLens keeps advanced
-              download tasks approachable.
-            </p>
-          </div>
-          <div class="features">
-            <article class="feature">
-              <h3>URL Metadata Preview</h3>
-              <p>
-                Inspect title, duration, and available formats before committing
-                to a download.
-              </p>
-            </article>
-            <article class="feature">
-              <h3>Format And Quality Control</h3>
-              <p>
-                Choose audio/video output profiles to avoid reruns and keep
-                quality predictable.
-              </p>
-            </article>
-            <article class="feature">
-              <h3>Playlist And Batch Support</h3>
-              <p>
-                Handle channels and playlists with a selective queue instead of
-                downloading blindly.
-              </p>
-            </article>
-            <article class="feature">
-              <h3>Queue Management</h3>
-              <p>
-                Pause, resume, retry, or cancel jobs with clear progress in a
-                dedicated downloads screen.
-              </p>
-            </article>
-            <article class="feature">
-              <h3>Setup Wizard</h3>
-              <p>
-                First-run checks guide users through required tools like yt-dlp
-                and optional helpers.
-              </p>
-            </article>
-            <article class="feature">
-              <h3>Persistent History</h3>
-              <p>
-                Keep track of past jobs and preferences for a reliable,
-                repeatable media workflow.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section class="section" id="screenshots">
-          <div class="section-head">
-            <h2>Program Screenshots</h2>
-            <p>
-              Real captures from the app so users know exactly what they are
-              installing.
-            </p>
-          </div>
-          <div class="shots">
-            <figure class="shot">
-              <img
-                src="../screenshots/home-preview.png"
-                alt="Home screen with URL preview"
-                loading="lazy"
-              />
-              <figcaption class="caption">
-                Home view and URL metadata analysis.
-              </figcaption>
-            </figure>
-            <figure class="shot">
-              <img
-                src="../screenshots/format-selector.png"
-                alt="Format and quality selector"
-                loading="lazy"
-              />
-              <figcaption class="caption">
-                Format and quality selector for precise outputs.
-              </figcaption>
-            </figure>
-            <figure class="shot">
-              <img
-                src="../screenshots/playlist-modal.png"
-                alt="Playlist modal"
-                loading="lazy"
-              />
-              <figcaption class="caption">
-                Playlist modal for batch selection.
-              </figcaption>
-            </figure>
-            <figure class="shot">
-              <img
-                src="../screenshots/downloads-queue.png"
-                alt="Downloads queue"
-                loading="lazy"
-              />
-              <figcaption class="caption">
-                Downloads queue with pause, resume, and retry controls.
-              </figcaption>
-            </figure>
-          </div>
-        </section>
-
-        <section class="section" id="workflow">
-          <div class="section-head">
-            <h2>How It Works</h2>
-            <p>Simple flow for non-technical users.</p>
-          </div>
-          <div class="workflow">
-            <article class="step">
-              <strong>STEP 1</strong>
-              <p>
-                Download the installer for your OS and complete the setup
-                wizard.
-              </p>
-            </article>
-            <article class="step">
-              <strong>STEP 2</strong>
-              <p>
-                Paste any supported media URL to fetch metadata and available
-                formats.
-              </p>
-            </article>
-            <article class="step">
-              <strong>STEP 3</strong>
-              <p>Select output format, quality, and destination preferences.</p>
-            </article>
-            <article class="step">
-              <strong>STEP 4</strong>
-              <p>Start downloads and manage progress from the queue screen.</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="footer">
-          Unsigned app warning is expected on some systems. On Windows choose
-          <strong>More info</strong>, on macOS choose
-          <strong>Open anyway</strong>. Full release files are always available
-          at
-          <a
-            id="release-page"
-            href="https://github.com/SamuelLChang/aetherlens-media-downloader/releases"
-            >GitHub Releases</a
-          >.
-        </section>
-      </main>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a href="#" class="logo">
+        <img src="./aetherlens-mark.svg" alt="AetherLens" />
+        <span>AetherLens</span>
+      </a>
+      <nav class="topnav" aria-label="Quick links">
+        <a href="#downloads">Downloads</a>
+        <a href="#features">Features</a>
+        <a href="#screenshots">Screenshots</a>
+        <a href="https://github.com/SamuelLChang/aetherlens-media-downloader" target="_blank" rel="noreferrer"
+          class="gh">
+          <svg class="gh-icon" viewBox="0 0 16 16" fill="currentColor">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+          </svg>
+          Source
+        </a>
+      </nav>
     </div>
+  </header>
 
-    <div
-      id="safety-modal-backdrop"
-      class="modal-backdrop"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="safety-modal-title"
-      hidden
-    >
-      <div class="modal">
-        <div class="modal-head">
-          <div class="modal-badge">
-            <span class="modal-badge-dot" aria-hidden="true"></span>
-            Download Started
-          </div>
-          <button id="safety-modal-close" class="btn modal-close" type="button">
-            Close
-          </button>
-        </div>
-
-        <h3 id="safety-modal-title">About Installer Security Warnings</h3>
-        <p>
-          Your download has started. On Windows or macOS, you might still see a
-          trust warning because AetherLens is an open-source app and we are not
-          paying for commercial code-signing certificates at this stage.
+  <div class="wrap">
+    <main>
+      <section class="hero">
+        <div class="hero-tag">// open-source &amp; cross-platform</div>
+        <h1>A cleaner way to <em>download media.</em></h1>
+        <p class="hero-desc">
+          Paste a link, pick a format, let AetherLens handle the rest.
+          Electron + yt-dlp under the hood, a proper queue on the surface.
         </p>
-        <p>
-          This is usually a signing/reputation warning, not proof of malware.
-          For clarity, you can always inspect the source code and releases in
-          this repository.
-        </p>
-
-        <div class="modal-verify">
-          <strong>Quick verification</strong>
-          <ul>
-            <li>
-              Use only links from this website or official GitHub releases.
-            </li>
-            <li>Compare release tags and commit history in the repository.</li>
-            <li>Inspect source code if you want full technical confidence.</li>
-          </ul>
-        </div>
-
-        <div class="modal-actions">
-          <a
-            class="modal-link"
-            href="https://github.com/SamuelLChang/aetherlens-media-downloader"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Review repository
+        <div class="hero-ctas">
+          <a class="btn btn-fill" href="#downloads">
+            <svg class="dl-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download
           </a>
-          <button
-            class="btn btn-primary"
-            type="button"
-            id="safety-modal-confirm"
-          >
-            I Understand
-          </button>
+          <a class="btn btn-ghost" href="#screenshots">See it first</a>
         </div>
+        <div class="stats">
+          <div>
+            <div class="stat-val">MIT</div>
+            <div class="stat-lbl">License</div>
+          </div>
+          <div>
+            <div class="stat-val">Win / Mac / Linux</div>
+            <div class="stat-lbl">Platforms</div>
+          </div>
+          <div>
+            <div class="stat-val">yt-dlp</div>
+            <div class="stat-lbl">Backend</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Downloads -->
+      <section class="sect reveal" id="downloads">
+        <div class="sect-top">
+          <div class="sect-label">Downloads</div>
+          <h2>Grab the installer</h2>
+          <p class="sect-desc">Pulled from the latest GitHub release. Pick your OS.</p>
+        </div>
+        <div class="dl-tag">
+          <span class="dl-tag-inner" id="status">loading…</span>
+        </div>
+        <div class="dl-row" id="download-cards"></div>
+      </section>
+
+      <!-- Features -->
+      <section class="sect reveal" id="features">
+        <div class="sect-top">
+          <div class="sect-label">Features</div>
+          <h2>What it does</h2>
+          <p class="sect-desc">URL analysis, format picking, queue management — no terminal needed.</p>
+        </div>
+        <div class="feat-grid">
+          <article class="feat">
+            <div class="feat-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </div>
+            <h3>URL metadata preview</h3>
+            <p>See title, duration, and available formats before downloading anything.</p>
+          </article>
+          <article class="feat">
+            <div class="feat-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <rect x="4" y="4" width="16" height="16" rx="2" />
+                <line x1="4" y1="10" x2="20" y2="10" />
+                <line x1="10" y1="4" x2="10" y2="20" />
+              </svg>
+            </div>
+            <h3>Format &amp; quality control</h3>
+            <p>Pick audio or video profiles — no guessing, no re-downloads.</p>
+          </article>
+          <article class="feat">
+            <div class="feat-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+            </div>
+            <h3>Playlist &amp; batch support</h3>
+            <p>Select specific items from channels and playlists instead of grabbing everything.</p>
+          </article>
+          <article class="feat">
+            <div class="feat-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+              </svg>
+            </div>
+            <h3>Queue management</h3>
+            <p>Pause, resume, retry, or cancel — everything lives in one screen.</p>
+          </article>
+          <article class="feat">
+            <div class="feat-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path
+                  d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+              </svg>
+            </div>
+            <h3>Setup wizard</h3>
+            <p>First-run flow handles dependencies so you don't touch a terminal.</p>
+          </article>
+          <article class="feat">
+            <div class="feat-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <h3>Persistent history</h3>
+            <p>Past downloads and preferences stick around between sessions.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- Screenshots -->
+      <section class="sect reveal" id="screenshots">
+        <div class="sect-top">
+          <div class="sect-label">Preview</div>
+          <h2>What you're installing</h2>
+          <p class="sect-desc">Actual captures from the app.</p>
+        </div>
+        <div class="shots">
+          <figure class="shot">
+            <img src="../screenshots/home-preview.png" alt="Home screen with URL preview" loading="lazy" />
+            <figcaption>Home — paste a URL, see metadata, download.</figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="../screenshots/format-selector.png" alt="Format and quality selector" loading="lazy" />
+            <figcaption>Format picker — choose codec, resolution, container.</figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="../screenshots/playlist-modal.png" alt="Playlist modal" loading="lazy" />
+            <figcaption>Playlist selector — pick items from a batch.</figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="../screenshots/downloads-queue.png" alt="Downloads queue" loading="lazy" />
+            <figcaption>Queue — progress, pause, retry, all in one place.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section class="sect reveal" id="workflow">
+        <div class="sect-top">
+          <div class="sect-label">Workflow</div>
+          <h2>Four steps, start to finish</h2>
+        </div>
+        <div class="steps">
+          <article class="stp">
+            <div class="stp-n">01</div>
+            <h3>Install</h3>
+            <p>Run the installer, follow the setup wizard.</p>
+          </article>
+          <article class="stp">
+            <div class="stp-n">02</div>
+            <h3>Paste</h3>
+            <p>Drop a URL — metadata and formats load automatically.</p>
+          </article>
+          <article class="stp">
+            <div class="stp-n">03</div>
+            <h3>Configure</h3>
+            <p>Set format, quality, and output folder.</p>
+          </article>
+          <article class="stp">
+            <div class="stp-n">04</div>
+            <h3>Download</h3>
+            <p>Hit go. Track progress in the queue.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        All binaries available on
+        <a id="release-page" href="https://github.com/SamuelLChang/aetherlens-media-downloader/releases" target="_blank"
+          rel="noreferrer">GitHub Releases</a>.
+      </p>
+      <p class="foot-warn">
+        You may see a signing warning on first launch — the app is open-source
+        and not commercially code-signed. On Windows click <strong>More info → Run anyway</strong>,
+        on macOS use <strong>System Settings → Open Anyway</strong>.
+      </p>
+    </footer>
+  </div>
+
+  <!-- Safety modal -->
+  <div id="safety-modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true"
+    aria-labelledby="safety-modal-title" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-badge">download started</span>
+        <button id="safety-modal-close" class="btn btn-sm modal-close" type="button">Close</button>
+      </div>
+      <h3 id="safety-modal-title">About installer warnings</h3>
+      <p>
+        Your download has started. Windows and macOS may show a trust warning
+        because AetherLens isn't commercially code-signed — that's a signing
+        cost thing, not a safety issue.
+      </p>
+      <div class="modal-verify">
+        <strong>Quick checks</strong>
+        <ul>
+          <li>Only use links from this page or official GitHub releases.</li>
+          <li>Compare release tags and commits in the repo.</li>
+          <li>Read the source if you want full confidence.</li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <a class="modal-link" href="https://github.com/SamuelLChang/aetherlens-media-downloader" target="_blank"
+          rel="noreferrer">View source</a>
+        <button class="btn btn-fill btn-sm" type="button" id="safety-modal-confirm">Got it</button>
       </div>
     </div>
+  </div>
 
-    <script>
-      const owner = "SamuelLChang";
-      const repo = "aetherlens-media-downloader";
-      const api = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
-      const statusEl = document.getElementById("status");
-      const cardsEl = document.getElementById("download-cards");
-      const releasePage = document.getElementById("release-page");
-      const safetyModalBackdrop = document.getElementById(
-        "safety-modal-backdrop",
-      );
-      const safetyModalClose = document.getElementById("safety-modal-close");
-      const safetyModalConfirm = document.getElementById(
-        "safety-modal-confirm",
-      );
-      let safetyNoticeShown =
-        sessionStorage.getItem("aetherlens-safety-notice-shown") === "1";
+  <script>
+    /* OS detection */
+    const ua = navigator.userAgent || '';
+    const userOS = /Win/i.test(ua) ? 'windows' : /Mac/i.test(ua) ? 'macos' : /Linux/i.test(ua) ? 'linux' : null;
 
-      function showSafetyNoticeOnce() {
-        if (safetyNoticeShown) {
-          return;
-        }
+    /* Scroll reveals */
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); io.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-        safetyNoticeShown = true;
-        sessionStorage.setItem("aetherlens-safety-notice-shown", "1");
-        safetyModalBackdrop.hidden = false;
-        document.body.style.overflow = "hidden";
+    /* Safety modal */
+    const owner = 'SamuelLChang', repo = 'aetherlens-media-downloader';
+    const api = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
+    const statusEl = document.getElementById('status');
+    const cardsEl = document.getElementById('download-cards');
+    const releasePage = document.getElementById('release-page');
+    const backdrop = document.getElementById('safety-modal-backdrop');
+    let noticed = sessionStorage.getItem('al-notice') === '1';
+
+    function showNotice() {
+      if (noticed) return;
+      noticed = true;
+      sessionStorage.setItem('al-notice', '1');
+      backdrop.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+    function hideNotice() { backdrop.hidden = true; document.body.style.overflow = ''; }
+
+    document.getElementById('safety-modal-close').onclick = hideNotice;
+    document.getElementById('safety-modal-confirm').onclick = hideNotice;
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) hideNotice(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !backdrop.hidden) hideNotice(); });
+
+    /* Release loader */
+    const osLabel = { windows: '🪟', macos: '🍎', linux: '🐧' };
+
+    function mkBtn(href, label, fill, safety) {
+      const a = document.createElement('a');
+      a.className = `btn btn-sm ${fill ? 'btn-fill' : 'btn-ghost'}`;
+      a.href = href; a.textContent = label;
+      if (safety) { a.target = '_blank'; a.rel = 'noopener noreferrer'; a.addEventListener('click', () => setTimeout(showNotice, 250)); }
+      return a;
+    }
+
+    function addCard(key, title, hint, asset) {
+      const c = document.createElement('article');
+      c.className = 'dl-card';
+      if (userOS === key) c.classList.add('mine');
+
+      const rec = document.createElement('span');
+      rec.className = 'dl-rec'; rec.textContent = '→ your OS';
+      c.appendChild(rec);
+
+      const ico = document.createElement('div');
+      ico.className = 'dl-os'; ico.textContent = osLabel[key] || '';
+      c.appendChild(ico);
+
+      const h = document.createElement('h3'); h.textContent = title; c.appendChild(h);
+      const p = document.createElement('p'); p.className = 'dl-sub'; p.textContent = hint; c.appendChild(p);
+
+      if (asset) {
+        c.appendChild(mkBtn(asset.browser_download_url, 'Download', true, true));
+      } else {
+        const m = document.createElement('p');
+        m.className = 'dl-sub'; m.style.marginTop = '0.4rem'; m.textContent = 'Not in latest release.';
+        c.appendChild(m);
+        c.appendChild(mkBtn('https://github.com/SamuelLChang/aetherlens-media-downloader/releases', 'Releases', false, false));
       }
+      cardsEl.appendChild(c);
+    }
 
-      function closeSafetyNotice() {
-        safetyModalBackdrop.hidden = true;
-        document.body.style.overflow = "";
+    function match(assets, re) { return assets.find(a => re.test(a.name)); }
+
+    (async () => {
+      try {
+        const r = await fetch(api, { headers: { Accept: 'application/vnd.github+json' } });
+        if (!r.ok) throw new Error(`${r.status}`);
+        const rel = await r.json();
+        const a = rel.assets || [];
+        const d = rel.published_at ? new Date(rel.published_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+        statusEl.textContent = `${rel.tag_name} · ${d}`;
+        if (rel.html_url) releasePage.href = rel.html_url;
+        addCard('windows', 'Windows', '.exe installer', match(a, /windows.*\.exe$/i));
+        addCard('macos', 'macOS', '.dmg disk image', match(a, /mac.*\.dmg$/i));
+        addCard('linux', 'Linux', '.AppImage portable', match(a, /linux.*\.AppImage$/i));
+      } catch (e) {
+        statusEl.textContent = 'could not load release';
+        addCard('windows', 'Windows', '.exe installer', null);
+        addCard('macos', 'macOS', '.dmg disk image', null);
+        addCard('linux', 'Linux', '.AppImage portable', null);
       }
+    })();
+  </script>
+</body>
 
-      safetyModalClose.addEventListener("click", closeSafetyNotice);
-      safetyModalConfirm.addEventListener("click", closeSafetyNotice);
-      safetyModalBackdrop.addEventListener("click", (event) => {
-        if (event.target === safetyModalBackdrop) {
-          closeSafetyNotice();
-        }
-      });
-
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && !safetyModalBackdrop.hidden) {
-          closeSafetyNotice();
-        }
-      });
-
-      function matchAsset(assets, type) {
-        return assets.find((asset) => type.test(asset.name));
-      }
-
-      function createButton(
-        href,
-        text,
-        isPrimary = true,
-        showSafetyAfterClick = false,
-      ) {
-        const button = document.createElement("a");
-        button.className = `btn ${isPrimary ? "btn-primary" : "btn-secondary"}`;
-        button.href = href;
-        button.textContent = text;
-
-        if (showSafetyAfterClick) {
-          button.target = "_blank";
-          button.rel = "noopener noreferrer";
-          button.addEventListener("click", () => {
-            setTimeout(showSafetyNoticeOnce, 280);
-          });
-        }
-
-        return button;
-      }
-
-      function addDownloadCard(title, hint, asset) {
-        const card = document.createElement("article");
-        card.className = "download-card";
-
-        const heading = document.createElement("h3");
-        heading.textContent = title;
-        card.appendChild(heading);
-
-        const body = document.createElement("p");
-        body.textContent = hint;
-        card.appendChild(body);
-
-        if (asset) {
-          card.appendChild(
-            createButton(
-              asset.browser_download_url,
-              `Download ${asset.name}`,
-              true,
-              true,
-            ),
-          );
-        } else {
-          const missing = document.createElement("p");
-          missing.textContent = "Not available in latest release.";
-          missing.style.marginTop = "0.4rem";
-          missing.style.fontSize = "0.86rem";
-          card.appendChild(missing);
-          card.appendChild(
-            createButton(
-              "https://github.com/SamuelLChang/aetherlens-media-downloader/releases",
-              "Open Releases",
-              false,
-            ),
-          );
-        }
-
-        cardsEl.appendChild(card);
-      }
-
-      async function loadRelease() {
-        try {
-          const response = await fetch(api, {
-            headers: { Accept: "application/vnd.github+json" },
-          });
-
-          if (!response.ok) {
-            throw new Error(`GitHub API returned ${response.status}`);
-          }
-
-          const release = await response.json();
-          const assets = release.assets || [];
-          const createdAt = release.published_at
-            ? new Date(release.published_at).toLocaleDateString(undefined, {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })
-            : "unknown date";
-
-          statusEl.textContent = `Latest ${release.tag_name} · ${createdAt}`;
-          if (release.html_url) {
-            releasePage.href = release.html_url;
-          }
-
-          addDownloadCard(
-            "Windows",
-            "Guided setup wizard (.exe)",
-            matchAsset(assets, /windows.*\.exe$/i),
-          );
-          addDownloadCard(
-            "macOS",
-            "Disk image installer (.dmg)",
-            matchAsset(assets, /mac.*\.dmg$/i),
-          );
-          addDownloadCard(
-            "Linux",
-            "Portable AppImage (.AppImage)",
-            matchAsset(assets, /linux.*\.AppImage$/i),
-          );
-        } catch (error) {
-          statusEl.textContent = "Could not load release metadata.";
-
-          addDownloadCard("Windows", "Guided setup wizard (.exe)", null);
-          addDownloadCard("macOS", "Disk image installer (.dmg)", null);
-          addDownloadCard("Linux", "Portable AppImage (.AppImage)", null);
-
-          const detail = document.createElement("p");
-          detail.style.margin = "0.7rem 0 0";
-          detail.style.fontSize = "0.82rem";
-          detail.textContent = String(
-            error && error.message ? error.message : error,
-          );
-          cardsEl.parentElement.appendChild(detail);
-        }
-      }
-
-      loadRelease();
-    </script>
-  </body>
 </html>

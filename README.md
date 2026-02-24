@@ -1,126 +1,126 @@
 # AetherLens Media Downloader
 
-AetherLens is a cross-platform desktop app for downloading and organizing media with a clean, task-focused workflow.
+A cross-platform desktop app for downloading and organizing media. Paste a URL, pick a format, manage everything from one queue.
 
-Built with Electron, React, and TypeScript, it is designed to make advanced download operations feel simple: paste a URL, inspect metadata, choose quality, and track every job from one place.
+Built with **Electron**, **React**, **TypeScript**, and **yt-dlp**.
 
-![AetherLens Logo](public/branding/aetherlens-logo.svg)
+<br>
 
-## Download From Website (Recommended)
+<p align="center">
+  <a href="https://samuellchang.github.io/aetherlens-media-downloader/download/">
+    <img src="https://img.shields.io/badge/-Download%20AetherLens-3b82f6?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwMS0yIDJINWEyIDIgMCAwMS0yLTJ2LTQiLz48cG9seWxpbmUgcG9pbnRzPSI3IDEwIDEyIDE1IDE3IDEwIi8+PGxpbmUgeDE9IjEyIiB5MT0iMTUiIHgyPSIxMiIgeTI9IjMiLz48L3N2Zz4=&logoColor=white" alt="Download AetherLens" height="40" />
+  </a>
+</p>
 
-For most users, the easiest path is the public download website:
+<p align="center">
+  <a href="https://samuellchang.github.io/aetherlens-media-downloader/download/">samuellchang.github.io/aetherlens-media-downloader</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/SamuelLChang/aetherlens-media-downloader/releases">Releases</a>
+  &nbsp;·&nbsp;
+  <a href="#quick-start">Dev Setup</a>
+</p>
 
-- Website: `https://samuellchang.github.io/aetherlens-media-downloader/`
-- Direct download page: `https://samuellchang.github.io/aetherlens-media-downloader/download/`
+<br>
 
-Open the website, choose your platform installer (`.exe`, `.dmg`, `.AppImage`), and install using the setup wizard.
+> **Easiest way to install:** visit the [download page](https://samuellchang.github.io/aetherlens-media-downloader/download/), pick your platform (`.exe` / `.dmg` / `.AppImage`), and run the installer.
 
-![AetherLens download website preview](docs/screenshots/website-download-preview.svg)
+---
 
-### Important Safety Note About OS Warnings
+## Screenshots
 
-Because AetherLens is open source and currently distributed without a paid commercial code-signing certificate, Windows SmartScreen and macOS Gatekeeper may show a safety warning.
+| Home & URL Preview | Format Selector |
+|---|---|
+| ![Home](docs/screenshots/home-preview.png) | ![Formats](docs/screenshots/format-selector.png) |
 
-This warning does **not** automatically mean the installer is malicious. It usually means the app is unsigned or newly distributed.
+| Playlist Batch | Downloads Queue |
+|---|---|
+| ![Playlist](docs/screenshots/playlist-modal.png) | ![Queue](docs/screenshots/downloads-queue.png) |
 
-If you want to verify before installing:
+---
 
-1. Review the source code in this repository.
-2. Download installers only from the official website/release links above.
-3. Compare release tags, commit history, and release assets in GitHub.
+## Features
 
-Official releases page:
+| | |
+|---|---|
+| **URL metadata preview** | See title, duration, and formats before downloading |
+| **Format & quality control** | Pick audio/video profiles — no guessing |
+| **Playlist & batch support** | Select specific items from channels and playlists |
+| **Queue management** | Pause, resume, retry, cancel — all in one screen |
+| **Setup wizard** | First-run flow handles dependencies automatically |
+| **Persistent history** | Past downloads and settings stick between sessions |
 
-- `https://github.com/SamuelLChang/aetherlens-media-downloader/releases`
-
-## Why AetherLens
-
-- Fast metadata preview before downloading
-- Format and quality control for video, audio, and image flows
-- Playlist and channel-style batch handling
-- Queue controls with pause, resume, retry, and cancel
-- Setup wizard for dependency checks and guided install commands
-- Local history and settings persistence
-
-## Product Tour
-
-All screenshots below are real in-app captures stored as `.png` files.
-
-### First-Run Setup Wizard
-
-![First-run setup wizard checking runtime modules](docs/screenshots/setup-wizard-first-run.png)
-
-On first launch, AetherLens checks required/optional runtime tools (`yt-dlp`, `ffmpeg`, `aria2c`) and shows one-click copy commands for missing tools.
-
-### Home And URL Preview
-
-![Home screen with URL analysis](docs/screenshots/home-preview.png)
-
-Paste any supported media URL to fetch title, duration, source metadata, and available formats before starting.
-
-### Format And Quality Selection
-
-![Format and quality picker](docs/screenshots/format-selector.png)
-
-Choose output type, quality level, and destination behavior. This keeps downloads predictable and avoids re-runs.
-
-### Playlist Workflow
-
-![Playlist selection modal](docs/screenshots/playlist-modal.png)
-
-For playlist-style URLs, AetherLens helps you review items and run batch downloads with better control over what gets queued.
-
-### Downloads Queue
-
-![Download queue with progress and actions](docs/screenshots/downloads-queue.png)
-
-Track active and completed jobs with progress information and controls for pause, resume, retry, and cancel.
+---
 
 ## How It Works
 
-1. Paste a media URL.
-2. Review metadata and available formats.
-3. Select format, quality, and target location.
-4. Start download and monitor progress.
-5. Manage queue operations from the Downloads page.
+```
+1. Paste a media URL
+2. Review metadata and available formats
+3. Select format, quality, and destination
+4. Start download → manage from the queue
+```
+
+---
 
 ## Quick Start
 
 ```bash
+git clone https://github.com/SamuelLChang/aetherlens-media-downloader.git
+cd aetherlens-media-downloader
 npm install
 npm run dev
 ```
 
-## One-Click Installer Downloads
+On first launch the setup wizard checks for `yt-dlp`, `ffmpeg`, and `aria2c` and shows install commands for anything missing.
 
-You do not need to clone/build locally once releases are published.
+---
 
-- Download page: `https://samuellchang.github.io/aetherlens-media-downloader/download/`
-- Full releases: `https://github.com/SamuelLChang/aetherlens-media-downloader/releases`
+## Installer Downloads
 
-How publishing works:
+You don't need to clone or build locally — just grab an installer:
 
-1. Push a version tag like `v0.2.0`.
-2. GitHub Actions builds Windows, macOS, and Linux installers.
-3. The workflow uploads all installers to a GitHub Release automatically.
-4. The download page reads the latest release and shows direct platform buttons.
+| Platform | Format | Link |
+|---|---|---|
+| **Windows** | `.exe` setup wizard | [Download page](https://samuellchang.github.io/aetherlens-media-downloader/download/) |
+| **macOS** | `.dmg` disk image | [Download page](https://samuellchang.github.io/aetherlens-media-downloader/download/) |
+| **Linux** | `.AppImage` portable | [Download page](https://samuellchang.github.io/aetherlens-media-downloader/download/) |
 
-### Enable GitHub Pages (one-time)
+All binaries: [GitHub Releases](https://github.com/SamuelLChang/aetherlens-media-downloader/releases)
 
-1. Open repository `Settings` -> `Pages`.
-2. Source: `Deploy from a branch`.
-3. Branch: `main`, folder: `/docs`.
-4. Save, then open `/download/` under your Pages URL.
+### About OS security warnings
 
-## Installation Guide (Step By Step)
+AetherLens is open-source and not commercially code-signed. Windows SmartScreen and macOS Gatekeeper may show a warning — this is a signing cost issue, not a safety issue.
 
-This section is designed for first-time users. If you follow the steps in order, the app should run without extra troubleshooting.
+- **Windows:** click *More info → Run anyway*
+- **macOS:** go to *System Settings → Privacy → Open Anyway*
 
-### 1. Install Required Tools
+To verify: review the source, compare release tags, download only from this repo or the official website.
 
-`yt-dlp` is required. `ffmpeg` and `aria2c` are optional but strongly recommended.
+### How releases are published
 
-Windows (PowerShell):
+1. Push a version tag (e.g. `v0.2.0`)
+2. GitHub Actions builds installers for all platforms
+3. Artifacts are uploaded to a GitHub Release automatically
+4. The [download page](https://samuellchang.github.io/aetherlens-media-downloader/download/) pulls from the latest release
+
+<details>
+<summary>Enable GitHub Pages (one-time repo setup)</summary>
+
+1. Open repository **Settings → Pages**
+2. Source: **Deploy from a branch**
+3. Branch: `main`, folder: `/docs`
+4. Save — then visit `/download/` under your Pages URL
+
+</details>
+
+---
+
+## Installation From Source
+
+### 1. Install dependencies
+
+<details>
+<summary>Windows (PowerShell)</summary>
 
 ```powershell
 winget install OpenJS.NodeJS.LTS
@@ -128,161 +128,135 @@ winget install yt-dlp.yt-dlp
 winget install Gyan.FFmpeg
 winget install aria2.aria2
 ```
+</details>
 
-macOS (Homebrew):
+<details>
+<summary>macOS (Homebrew)</summary>
 
 ```bash
 brew install node yt-dlp ffmpeg aria2
 ```
+</details>
 
-Linux examples:
-
-Debian/Ubuntu:
+<details>
+<summary>Linux (Debian/Ubuntu)</summary>
 
 ```bash
-sudo apt update
-sudo apt install -y nodejs npm yt-dlp ffmpeg aria2
+sudo apt update && sudo apt install -y nodejs npm yt-dlp ffmpeg aria2
 ```
+</details>
 
-Fedora:
+<details>
+<summary>Linux (Fedora)</summary>
 
 ```bash
 sudo dnf install -y nodejs npm yt-dlp ffmpeg aria2
 ```
+</details>
 
-Arch:
+<details>
+<summary>Linux (Arch)</summary>
 
 ```bash
 sudo pacman -S --needed nodejs npm yt-dlp ffmpeg aria2
 ```
+</details>
 
-### 2. Verify Tool Installation
-
-Run:
+### 2. Verify
 
 ```bash
-node --version
-npm --version
-yt-dlp --version
-ffmpeg -version
-aria2c --version
+node --version && npm --version && yt-dlp --version
 ```
 
-Notes:
+`ffmpeg` and `aria2c` are optional but recommended.
 
-- `yt-dlp` must work.
-- `ffmpeg` and `aria2c` may be missing if you only want basic downloads.
-
-### 3. Clone The Project
+### 3. Clone, install, run
 
 ```bash
 git clone https://github.com/SamuelLChang/aetherlens-media-downloader.git
 cd aetherlens-media-downloader
-```
-
-### 4. Install JavaScript Dependencies
-
-```bash
 npm install
-```
-
-### 5. Run The App (Development)
-
-```bash
 npm run dev
 ```
 
-What to expect on first run:
-
-1. The setup wizard opens automatically.
-2. Missing tools are marked as "Not found on PATH".
-3. Use "Copy command" and install missing items.
-4. Click "Recheck" in the wizard.
-5. Continue when required tools are detected.
-
-### 6. Build A Desktop Installer
+### 4. Build installer
 
 ```bash
 npm run build
 ```
 
-This generates packaged artifacts with Electron Builder.
-
-### 7. Optional: Bundle Local `aria2c`
-
-If you want to package with a local `aria2c` binary (when available on your machine):
-
+Optional — bundle local `aria2c`:
 ```bash
 npm run build:with-bundled-aria2
 ```
 
+---
+
 ## System Requirements
 
-- Node.js 18+
-- npm 9+
-- `yt-dlp` available on system `PATH`
-- Optional: `ffmpeg` for merge/conversion workflows
-- Optional: `aria2c` for acceleration
+- Node.js 18+ / npm 9+
+- `yt-dlp` on `PATH` (required)
+- `ffmpeg` (optional — for merge/conversion)
+- `aria2c` (optional — for download acceleration)
 
-For platform-specific commands, see `SYSTEM_REQUIREMENTS.md`.
+See [`SYSTEM_REQUIREMENTS.md`](SYSTEM_REQUIREMENTS.md) for details.
 
-## Build And Package
-
-```bash
-npm run build
-```
-
-Notes:
-
-- Default builds do not bundle third-party helper binaries.
-- If `aria2c` is available on `PATH`, the app can use it at runtime.
-- Optional helper bundling: `npm run build:with-bundled-aria2`.
+---
 
 ## Scripts
 
-- `npm run dev`: run renderer and Electron in development mode
-- `npm run prepare:aria2`: best-effort bundle of local `aria2c` from `PATH`
-- `npm run build`: compile and package with Electron Builder
-- `npm run build:with-bundled-aria2`: bundle `aria2c` then build
-- `npm run lint`: run ESLint
-- `npm run preview`: preview renderer build
+| Command | Description |
+|---|---|
+| `npm run dev` | Run in development mode |
+| `npm run build` | Compile + package with Electron Builder |
+| `npm run build:with-bundled-aria2` | Bundle `aria2c` then build |
+| `npm run prepare:aria2` | Best-effort bundle of local `aria2c` |
+| `npm run lint` | Run ESLint |
+| `npm run preview` | Preview renderer build |
 
-## Developer Integration
+---
 
-Renderer-to-main APIs are exposed through `window.electronAPI` in `electron/preload.ts`.
+## Developer API
 
-Key integration methods:
+Renderer ↔ main process communication goes through `window.electronAPI` (defined in `electron/preload.ts`).
 
-- `getVideoInfo(url, cookiesBrowser?)`
-- `startDownload(options)`
-- `pauseDownload(id)`
-- `resumeDownload(id)`
-- `cancelDownload(id)`
-- `getPlaylistInfo(url)`
-- `searchVideos(query, platform, count)`
-- `getDownloadLocation()`
-- `selectDownloadLocation()`
-- `getAvailableBrowsers()`
-- `validateBrowserCookies(browser)`
+<details>
+<summary>Key IPC methods</summary>
 
-If you extend behavior, add IPC handlers in `electron/main.ts` and expose minimal safe methods through preload.
+| Method | Purpose |
+|---|---|
+| `getVideoInfo(url, cookiesBrowser?)` | Fetch video metadata |
+| `startDownload(options)` | Start a download job |
+| `pauseDownload(id)` / `resumeDownload(id)` | Pause/resume |
+| `cancelDownload(id)` | Cancel a job |
+| `getPlaylistInfo(url)` | Fetch playlist metadata |
+| `searchVideos(query, platform, count)` | Search for videos |
+| `getDownloadLocation()` / `selectDownloadLocation()` | Manage output path |
+| `getAvailableBrowsers()` / `validateBrowserCookies(browser)` | Cookie browser support |
+
+Extend by adding IPC handlers in `electron/main.ts` and exposing safe methods through preload.
+
+</details>
+
+---
 
 ## Project Structure
 
-- `src/`: React renderer
-- `electron/`: Electron main and preload process
-- `scripts/`: helper scripts for build-time tasks
-- `build/icons/`: packaging icons
-- `bin/`: optional runtime helper binaries
-- `docs/screenshots/`: README visual assets
+```
+src/            React renderer
+electron/       Electron main + preload
+scripts/        Build-time helper scripts
+build/icons/    Packaging icons
+bin/            Optional runtime binaries
+docs/           GitHub Pages website + screenshots
+```
 
-## Legal And Compliance
+---
 
-- License: MIT (`LICENSE`)
-- This project is for lawful use only
-- Users are responsible for compliance with copyright law, local regulations, and platform terms
+## Legal
 
-Additional references:
+MIT License — see [`LICENSE`](LICENSE).
 
-- `LEGAL.md`
-- `THIRD_PARTY_NOTICES.md`
+This project is for **lawful use only**. Users are responsible for compliance with copyright law, local regulations, and platform terms of service.
+
+See also: [`LEGAL.md`](LEGAL.md) · [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)
