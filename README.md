@@ -6,6 +6,33 @@ Built with Electron, React, and TypeScript, it is designed to make advanced down
 
 ![AetherLens Logo](public/branding/aetherlens-logo.svg)
 
+## Download From Website (Recommended)
+
+For most users, the easiest path is the public download website:
+
+- Website: `https://samuellchang.github.io/aetherlens-media-downloader/`
+- Direct download page: `https://samuellchang.github.io/aetherlens-media-downloader/download/`
+
+Open the website, choose your platform installer (`.exe`, `.dmg`, `.AppImage`), and install using the setup wizard.
+
+![AetherLens download website preview](docs/screenshots/website-download-preview.svg)
+
+### Important Safety Note About OS Warnings
+
+Because AetherLens is open source and currently distributed without a paid commercial code-signing certificate, Windows SmartScreen and macOS Gatekeeper may show a safety warning.
+
+This warning does **not** automatically mean the installer is malicious. It usually means the app is unsigned or newly distributed.
+
+If you want to verify before installing:
+
+1. Review the source code in this repository.
+2. Download installers only from the official website/release links above.
+3. Compare release tags, commit history, and release assets in GitHub.
+
+Official releases page:
+
+- `https://github.com/SamuelLChang/aetherlens-media-downloader/releases`
+
 ## Why AetherLens
 
 - Fast metadata preview before downloading

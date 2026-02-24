@@ -1,0 +1,59 @@
+<svg width="1600" height="960" viewBox="0 0 1600 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="960" fill="#F4EFE2"/>
+  <rect x="30" y="30" width="1540" height="900" rx="26" fill="#FFFDF6" stroke="#D6CFBA" stroke-width="2"/>
+  <rect x="30" y="30" width="1540" height="68" rx="26" fill="#ECE5D2"/>
+  <circle cx="72" cy="64" r="10" fill="#C27B42"/>
+  <circle cx="104" cy="64" r="10" fill="#8FA57F"/>
+  <circle cx="136" cy="64" r="10" fill="#4C8A62"/>
+  <rect x="178" y="47" width="980" height="34" rx="17" fill="#FBF7EC" stroke="#D9D1BF"/>
+  <text x="200" y="69" font-family="Segoe UI, Arial" font-size="16" fill="#3B403A">samuellchang.github.io/aetherlens-media-downloader/download/</text>
+
+  <rect x="94" y="140" width="862" height="292" rx="24" fill="#F7F1DF" stroke="#D6CFBA"/>
+  <text x="126" y="205" font-family="Segoe UI, Arial" font-size="56" font-weight="700" fill="#14231A">AetherLens</text>
+  <text x="126" y="256" font-family="Segoe UI, Arial" font-size="34" font-weight="600" fill="#1E3729">Download videos, playlists, and audio with a cleaner workflow.</text>
+  <text x="126" y="304" font-family="Segoe UI, Arial" font-size="23" fill="#415347">Cross-platform desktop downloader with metadata preview, format control, and queue management.</text>
+  <rect x="126" y="340" width="214" height="52" rx="12" fill="#1D6B42"/>
+  <text x="163" y="373" font-family="Segoe UI, Arial" font-size="24" font-weight="700" fill="#FFFFFF">Get Installer</text>
+  <rect x="358" y="340" width="196" height="52" rx="12" fill="#FFFFFF" stroke="#D6CFBA"/>
+  <text x="394" y="373" font-family="Segoe UI, Arial" font-size="24" font-weight="700" fill="#1F2A21">See The App</text>
+
+  <rect x="985" y="140" width="520" height="292" rx="24" fill="#F7F1DF" stroke="#D6CFBA"/>
+  <text x="1016" y="193" font-family="Segoe UI, Arial" font-size="38" font-weight="700" fill="#14231A">Latest Release Downloads</text>
+  <rect x="1016" y="216" width="250" height="34" rx="17" fill="#FDFBF4" stroke="#D8D0BE"/>
+  <text x="1032" y="238" font-family="Segoe UI, Arial" font-size="16" fill="#3B403A">Latest v0.1.1</text>
+
+  <rect x="1016" y="265" width="148" height="140" rx="14" fill="#FCFAF2" stroke="#D6CFBA"/>
+  <text x="1042" y="298" font-family="Segoe UI, Arial" font-size="27" font-weight="700" fill="#18261D">Windows</text>
+  <rect x="1038" y="344" width="104" height="42" rx="10" fill="#1D6B42"/>
+  <text x="1054" y="371" font-family="Segoe UI, Arial" font-size="20" font-weight="700" fill="#FFFFFF">.exe</text>
+
+  <rect x="1179" y="265" width="148" height="140" rx="14" fill="#FCFAF2" stroke="#D6CFBA"/>
+  <text x="1213" y="298" font-family="Segoe UI, Arial" font-size="27" font-weight="700" fill="#18261D">macOS</text>
+  <rect x="1201" y="344" width="104" height="42" rx="10" fill="#1D6B42"/>
+  <text x="1217" y="371" font-family="Segoe UI, Arial" font-size="20" font-weight="700" fill="#FFFFFF">.dmg</text>
+
+  <rect x="1342" y="265" width="148" height="140" rx="14" fill="#FCFAF2" stroke="#D6CFBA"/>
+  <text x="1385" y="298" font-family="Segoe UI, Arial" font-size="27" font-weight="700" fill="#18261D">Linux</text>
+  <rect x="1364" y="344" width="104" height="42" rx="10" fill="#1D6B42"/>
+  <text x="1370" y="371" font-family="Segoe UI, Arial" font-size="20" font-weight="700" fill="#FFFFFF">AppImage</text>
+
+  <text x="94" y="506" font-family="Segoe UI, Arial" font-size="38" font-weight="700" fill="#18261D">Program Screenshots</text>
+
+  <rect x="94" y="530" width="712" height="370" rx="20" fill="#FFFFFF" stroke="#D6CFBA"/>
+  <rect x="120" y="560" width="660" height="250" rx="12" fill="#E9ECEF"/>
+  <rect x="145" y="590" width="250" height="34" rx="8" fill="#D0D7DE"/>
+  <rect x="145" y="640" width="560" height="18" rx="6" fill="#D0D7DE"/>
+  <rect x="145" y="670" width="430" height="18" rx="6" fill="#D0D7DE"/>
+  <rect x="145" y="720" width="130" height="52" rx="10" fill="#7EA47A"/>
+  <text x="186" y="753" font-family="Segoe UI, Arial" font-size="24" font-weight="700" fill="#FFFFFF">Play</text>
+  <text x="120" y="846" font-family="Segoe UI, Arial" font-size="22" fill="#415347">Home view and URL metadata analysis.</text>
+
+  <rect x="836" y="530" width="669" height="370" rx="20" fill="#FFFFFF" stroke="#D6CFBA"/>
+  <rect x="862" y="560" width="617" height="250" rx="12" fill="#E9ECEF"/>
+  <rect x="888" y="590" width="220" height="34" rx="8" fill="#D0D7DE"/>
+  <rect x="888" y="640" width="500" height="18" rx="6" fill="#D0D7DE"/>
+  <rect x="888" y="670" width="380" height="18" rx="6" fill="#D0D7DE"/>
+  <rect x="888" y="720" width="180" height="52" rx="10" fill="#C27B42"/>
+  <text x="940" y="753" font-family="Segoe UI, Arial" font-size="24" font-weight="700" fill="#FFFFFF">Queue</text>
+  <text x="862" y="846" font-family="Segoe UI, Arial" font-size="22" fill="#415347">Downloads queue with pause, resume, and retry controls.</text>
+</svg>
