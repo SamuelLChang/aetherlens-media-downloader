@@ -75,20 +75,47 @@ const getActiveDownloadsPath = async () => {
 };
 
 // Get yt-dlp path - uses bundled or system yt-dlp
-const getYtDlpPath = () => {
-  // Try to find yt-dlp in common locations
-  const possiblePaths = [
-    'yt-dlp', // System PATH
-    path.join(process.env.APP_ROOT || '', 'bin', 'yt-dlp'),
-    path.join(process.env.APP_ROOT || '', 'node_modules', 'yt-dlp-exec', 'bin', 'yt-dlp'),
+let ytDlpPathCache: string | null = null;
+
+const getYtDlpCandidates = (): string[] => {
+  const exeName = process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
+  return [
+    path.join(process.resourcesPath, 'bin', exeName),       // Packaged app
+    path.join(process.env.APP_ROOT || '', 'bin', exeName),   // Dev mode
+    'yt-dlp',                                                // System PATH
   ];
-  return possiblePaths[0]; // Default to system PATH
+};
+
+const getYtDlpPath = (): string => {
+  if (ytDlpPathCache) return ytDlpPathCache;
+
+  for (const candidate of getYtDlpCandidates()) {
+    try {
+      if (candidate !== 'yt-dlp' && !fs.existsSync(candidate)) {
+        continue;
+      }
+
+      const probe = spawnSync(candidate, ['--version'], {
+        stdio: 'ignore',
+        windowsHide: true,
+      });
+
+      if (probe.status === 0) {
+        ytDlpPathCache = candidate;
+        return candidate;
+      }
+    } catch {
+      // Try next candidate.
+    }
+  }
+
+  // Fallback to system PATH even if probe failed (yt-dlp might appear later).
+  return 'yt-dlp';
 };
 
 let aria2Available: boolean | null = null;
 let aria2PathCache: string | null = null;
 let ffmpegAvailable: boolean | null = null;
-let ytDlpAvailable: boolean | null = null;
 
 const getAria2Candidates = (): string[] => {
   const exeName = process.platform === 'win32' ? 'aria2c.exe' : 'aria2c';
@@ -152,19 +179,20 @@ const isFfmpegAvailable = (): boolean => {
 };
 
 const isYtDlpAvailable = (): boolean => {
-  if (ytDlpAvailable !== null) return ytDlpAvailable;
+  // Resolved path is already probed during getYtDlpPath(); if cache is set it works.
+  const resolved = getYtDlpPath();
+  if (ytDlpPathCache) return true;
 
+  // Cache miss means none of the candidates passed the probe.
   try {
-    const probe = spawnSync(getYtDlpPath(), ['--version'], {
+    const probe = spawnSync(resolved, ['--version'], {
       stdio: 'ignore',
       windowsHide: true,
     });
-    ytDlpAvailable = probe.status === 0;
+    return probe.status === 0;
   } catch {
-    ytDlpAvailable = false;
+    return false;
   }
-
-  return ytDlpAvailable;
 };
 
 const getInstallCommandMap = () => {

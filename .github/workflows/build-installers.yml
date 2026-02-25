@@ -28,11 +28,19 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Setup Python (for yt-dlp)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install yt-dlp
+        run: pip install yt-dlp
+
       - name: Install dependencies
         run: npm ci
 
       - name: Build app and installers
-        run: npm run build -- --publish never
+        run: npm run build:bundled -- --publish never
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4

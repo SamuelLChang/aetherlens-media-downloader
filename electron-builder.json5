@@ -8,6 +8,9 @@
     output: "release/${version}",
   },
   files: ["dist", "dist-electron"],
+  extraResources: [
+    { from: "bin/", to: "bin/", filter: ["**/*", "!.gitkeep"] },
+  ],
   mac: {
     icon: "build/icons/icon.png",
     target: ["dmg"],

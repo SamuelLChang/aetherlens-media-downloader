@@ -1,7 +1,7 @@
 {
   "name": "aetherlens-media-downloader",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Desktop media downloader built with Electron, React, and yt-dlp.",
   "keywords": [
     "electron",
@@ -18,8 +18,10 @@
   "scripts": {
     "dev": "vite",
     "prepare:aria2": "node scripts/bundle-aria2.mjs",
+    "prepare:yt-dlp": "node scripts/bundle-yt-dlp.mjs",
+    "prepare:deps": "npm run prepare:aria2 && npm run prepare:yt-dlp",
     "build": "tsc && vite build && electron-builder",
-    "build:with-bundled-aria2": "npm run prepare:aria2 && npm run build",
+    "build:bundled": "npm run prepare:deps && npm run build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },

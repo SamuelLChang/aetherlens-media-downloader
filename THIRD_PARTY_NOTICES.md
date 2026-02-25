@@ -12,8 +12,8 @@ The app may use third-party tools at runtime and packaging time. If you redistri
 
 ## Distribution Guidance
 
-- Default releases should avoid bundling helper binaries unless required.
-- If you bundle helper binaries, include required license texts/attributions/source-offer requirements where applicable.
+- `yt-dlp` is bundled with the installer by default. As it uses the Unlicense (public domain), no additional license text is required.
+- If you bundle other helper binaries (e.g., `ffmpeg`, `aria2c`), include required license texts/attributions/source-offer requirements where applicable.
 - Re-check obligations before each release.
 - Verify license terms of the exact binary build you distribute (especially for `ffmpeg`).
 
